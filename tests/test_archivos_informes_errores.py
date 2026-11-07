@@ -15,7 +15,7 @@ from firmador_masivo.informes import armar_resumen, fmt_hms, guardar_informes, r
 # ---------------------------------------------------------------- versión
 def test_version_semver_y_unica():
     assert re.fullmatch(r"\d+\.\d+\.\d+", firmador_masivo.__version__)
-    assert firmador_masivo.__version__ == "1.0.0"
+    assert firmador_masivo.__version__ == "1.0.1"
 
 
 # ---------------------------------------------------------------- archivos

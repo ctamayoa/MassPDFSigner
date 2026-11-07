@@ -1,6 +1,6 @@
-"""Imprime las notas de una versión: su sección del CHANGELOG y el SHA256 del .exe.
+"""Imprime las notas de una versión: su sección del CHANGELOG y los SHA256 de los archivos.
 
-Uso: python packaging/notas_version.py v1.0.0 <sha256>
+Uso: python packaging/notas_version.py v1.0.1 dist/SHA256SUMS.txt
 """
 import re
 import sys
@@ -15,18 +15,22 @@ def seccion(changelog, version):
 
 def main():
     version = sys.argv[1].lstrip("v")
-    sha = sys.argv[2] if len(sys.argv) > 2 else ""
+    sumas = Path(sys.argv[2]).read_text(encoding="ascii").strip() if len(sys.argv) > 2 else ""
     texto = (Path(__file__).resolve().parent.parent / "CHANGELOG.md").read_text(encoding="utf-8")
     cuerpo = seccion(texto, version) or "Sin notas en el CHANGELOG."
     print(cuerpo)
     print()
-    print("### Verificación")
+    print("### Descarga")
     print()
-    print("SHA256 de `FirmadorPDF.exe`:")
+    print(f"- **`FirmadorPDF-Setup-{version}.exe`**: instalador (recomendado).")
+    print(f"- **`FirmadorPDF-portable-{version}.zip`**: versión portátil; descomprime la carpeta y ejecuta `FirmadorPDF.exe`.")
     print()
-    print(f"```\n{sha}\n```")
+    print("### Verificación (SHA256)")
     print()
-    print("El `.exe` no está firmado digitalmente: Windows o tu antivirus pueden mostrar una advertencia.")
+    print(f"```\n{sumas}\n```")
+    print()
+    print("En PowerShell: `(Get-FileHash .\\ARCHIVO -Algorithm SHA256).Hash`. "
+          "Los archivos no están firmados digitalmente: Windows o tu antivirus pueden mostrar una advertencia.")
 
 
 if __name__ == "__main__":

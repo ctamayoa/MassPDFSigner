@@ -18,17 +18,17 @@ Rendimiento de referencia: unos 0,2 segundos por PDF sin sello de tiempo.
 
 ## Instalación (Windows)
 
-1. Entra a la sección **Releases** de este repositorio y descarga `FirmadorPDF.exe` y `FirmadorPDF.exe.sha256`.
+1. Entra a la sección **Releases** de este repositorio y descarga `FirmadorPDF-Setup-X.Y.Z.exe` (instalador) y `SHA256SUMS.txt`. Si prefieres no instalar, descarga el `.zip` portátil, descomprímelo y ejecuta `FirmadorPDF.exe`.
 2. Comprueba que el archivo no se alteró. En PowerShell, desde la carpeta de la descarga:
 
    ```powershell
-   (Get-FileHash .\FirmadorPDF.exe -Algorithm SHA256).Hash
+   (Get-FileHash .\FirmadorPDF-Setup-X.Y.Z.exe -Algorithm SHA256).Hash
    ```
 
-   El resultado debe coincidir con el texto de `FirmadorPDF.exe.sha256`.
-3. Ejecuta `FirmadorPDF.exe`. No requiere instalar Python.
+   El resultado debe coincidir con la línea de ese archivo en `SHA256SUMS.txt`.
+3. Ejecuta el instalador. No pide permisos de administrador y no requiere instalar Python.
 
-> El `.exe` no está firmado digitalmente, así que Windows o tu antivirus pueden mostrar una advertencia. Si prefieres no confiar en el binario, puedes compilarlo tú mismo: ver [docs/compilar.md](docs/compilar.md).
+> Los archivos no están firmados digitalmente, así que Windows o tu antivirus pueden mostrar una advertencia. Si prefieres no confiar en el binario, puedes compilarlo tú mismo: ver [docs/compilar.md](docs/compilar.md).
 
 ## Uso
 

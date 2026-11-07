@@ -1,16 +1,18 @@
 name: Release
 
-# Se dispara al subir una etiqueta vX.Y.Z (por ejemplo v1.0.0)
+# Al subir una etiqueta vX.Y.Z se compila y se publica la Release.
+# Con "Run workflow" (disparo manual) se compila todo y se guarda como artefacto, SIN publicar.
 on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  exe:
+  instalador:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,41 +25,87 @@ jobs:
       - name: Instalar
         run: python -m pip install -e ".[dev]"
 
-      - name: La etiqueta debe coincidir con la versión del código
+      - name: Leer la versión del código
         shell: pwsh
         run: |
           $version = python -c "import firmador_masivo; print(firmador_masivo.__version__)"
-          if ("v$version" -ne "${{ github.ref_name }}") {
-            Write-Error "La etiqueta ${{ github.ref_name }} no coincide con la versión del código (v$version)."
+          "VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: La etiqueta debe coincidir con la versión del código
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          if ("v$env:VERSION" -ne "${{ github.ref_name }}") {
+            Write-Error "La etiqueta ${{ github.ref_name }} no coincide con la versión del código (v$env:VERSION)."
             exit 1
           }
 
       - name: Pruebas
         run: python -m pytest
 
-      - name: Compilar el .exe
+      # Modo carpeta (no un solo .exe): abre más rápido y se comprime mucho mejor en el instalador.
+      # Se excluyen numpy, onnxruntime y similares: PyMuPDF los declara pero el programa no los usa.
+      - name: Compilar el programa
         run: >
-          pyinstaller --onefile --windowed --name FirmadorPDF --paths src
+          pyinstaller --noconfirm --windowed --name FirmadorPDF --paths src
           --collect-all pyhanko --collect-all pyhanko_certvalidator
-          --collect-all pymupdf --collect-all aiohttp --collect-all qrcode --collect-data firmador_masivo
+          --collect-all aiohttp --collect-all qrcode
+          --collect-binaries pymupdf --collect-data firmador_masivo
+          --exclude-module onnxruntime --exclude-module numpy --exclude-module networkx
+          --exclude-module pandas --exclude-module scipy --exclude-module matplotlib
+          --exclude-module pymupdf.layout --exclude-module pymupdf4llm --exclude-module pymupdf_layout
           packaging/firmador_pdf.py
+
+      - name: Autoprueba del programa compilado
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/FirmadorPDF/FirmadorPDF.exe -ArgumentList "--autoprueba" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "La autoprueba del programa compilado falló (código $($p.ExitCode))."; exit 1 }
+
+      - name: Crear el instalador
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" packaging/instalador.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Crear la versión portátil (.zip)
+        shell: pwsh
+        run: Compress-Archive -Path dist/FirmadorPDF -DestinationPath "dist/FirmadorPDF-portable-$env:VERSION.zip"
 
       - name: Calcular SHA256
         shell: pwsh
         run: |
-          $hash = (Get-FileHash dist/FirmadorPDF.exe -Algorithm SHA256).Hash.ToLower()
-          "$hash  FirmadorPDF.exe" | Out-File -Encoding ascii dist/FirmadorPDF.exe.sha256
-          "SHA256=$hash" >> $env:GITHUB_ENV
+          Set-Location dist
+          $lineas = foreach ($f in "FirmadorPDF-Setup-$env:VERSION.exe", "FirmadorPDF-portable-$env:VERSION.zip") {
+            "$((Get-FileHash $f -Algorithm SHA256).Hash.ToLower())  $f"
+          }
+          $lineas | Out-File -Encoding ascii SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+
+      - name: Guardar archivos (disparo manual)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ env.VERSION }}
+          path: |
+            dist/FirmadorPDF-Setup-*.exe
+            dist/FirmadorPDF-portable-*.zip
+            dist/SHA256SUMS.txt
 
       - name: Notas de la versión desde el CHANGELOG
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
-        run: python packaging/notas_version.py "${{ github.ref_name }}" "$env:SHA256" > notas.md
+        run: python packaging/notas_version.py "${{ github.ref_name }}" dist/SHA256SUMS.txt > notas.md
 
       - name: Publicar la Release
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "${{ github.ref_name }}"
-          dist/FirmadorPDF.exe dist/FirmadorPDF.exe.sha256
+          "dist/FirmadorPDF-Setup-$env:VERSION.exe"
+          "dist/FirmadorPDF-portable-$env:VERSION.zip"
+          dist/SHA256SUMS.txt
           --title "${{ github.ref_name }}" --notes-file notas.md

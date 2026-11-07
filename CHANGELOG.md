@@ -6,6 +6,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-07
+
+### Added
+- Instalador para Windows (`FirmadorPDF-Setup-X.Y.Z.exe`, Inno Setup) en español, inglés y portugués: instala sin permisos de administrador, crea acceso en el menú Inicio y desinstalador.
+- Versión portátil en `.zip` (carpeta con el programa, sin instalar).
+- `SHA256SUMS.txt` con las sumas de ambos archivos.
+- `FirmadorPDF.exe --autoprueba`: comprueba que el programa compilado firma correctamente; el flujo de Release la ejecuta antes de publicar.
+
+### Changed
+- La Release deja de incluir un único `.exe` de 170 MB: el programa se compila en modo carpeta y sin librerías que no usa (numpy, onnxruntime…), y se comprime en el instalador.
+
 ## [1.0.0] - 2026-11-07
 
 Primera versión pública. Parte de la versión interna «10» del programa.
@@ -27,5 +38,6 @@ Primera versión pública. Parte de la versión interna «10» del programa.
 - Ortografía de la interfaz y de los informes (Contraseña, posición, código, página, última…).
 - Un PDF dañado, vacío o que no es un PDF ahora se informa como «El archivo está dañado o no es un PDF válido.» en lugar de «Failed to open stream».
 
-[Unreleased]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/ctamayoa/MassPDFSigner/releases/tag/v1.0.0
