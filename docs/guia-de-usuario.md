@@ -2,6 +2,15 @@
 
 Esta guía explica cómo firmar un lote de PDFs con Firmador Masivo PDF.
 
+## Instalación
+
+Descarga de la sección **Releases** una de estas dos opciones:
+
+- **Instalador** (`FirmadorPDF-Setup-X.Y.Z.exe`): ejecútalo y sigue el asistente. No pide permisos de administrador. Después lo abres desde el menú Inicio.
+- **Portátil** (`FirmadorPDF-portable-X.Y.Z.zip`): no se instala. Clic derecho → *Extraer todo*, abre la carpeta que se crea y ejecuta `FirmadorPDF.exe`. Útil si trabajas desde una memoria USB, en un equipo prestado o de un cliente, o si en tu equipo no puedes instalar programas. No abras el `.exe` sin extraer antes el `.zip`.
+
+Para quitarlo: el instalado, desde *Aplicaciones instaladas* de Windows; el portátil, borrando la carpeta.
+
 ## Antes de empezar
 
 Necesitas:

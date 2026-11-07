@@ -17,11 +17,14 @@ The interface is available in **Spanish, English and Portuguese (Brazil)**; swit
 
 ## Install (Windows)
 
-1. Download `FirmadorPDF.exe` and `FirmadorPDF.exe.sha256` from the **Releases** section.
-2. Check the file: `(Get-FileHash .\FirmadorPDF.exe -Algorithm SHA256).Hash` must match the `.sha256` file.
-3. Run `FirmadorPDF.exe`. Python is not required.
+From the **Releases** section, download one of:
 
-The `.exe` is not code-signed, so Windows or your antivirus may warn about it. You can build it yourself: see [docs/compilar.md](docs/compilar.md) (Spanish).
+- **`FirmadorPDF-Setup-X.Y.Z.exe`** (installer, ~40 MB): installs for your user without administrator rights, with a Start menu entry and an uninstaller.
+- **`FirmadorPDF-portable-X.Y.Z.zip`** (portable, ~58 MB): nothing to install. Extract the **whole** folder and run `FirmadorPDF.exe`. Handy for a USB drive, a borrowed or client computer, or a locked-down machine. Delete the folder to remove it.
+
+Check the download: `(Get-FileHash .\FILE -Algorithm SHA256).Hash` must match the line for that file in `SHA256SUMS.txt`. Python is not required.
+
+The files are not code-signed, so Windows or your antivirus may warn about it. You can build it yourself: see [docs/compilar.md](docs/compilar.md) (Spanish).
 
 ## Run from source
 

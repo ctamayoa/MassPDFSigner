@@ -30,6 +30,17 @@ Rendimiento de referencia: unos 0,2 segundos por PDF sin sello de tiempo.
 
 > Los archivos no están firmados digitalmente, así que Windows o tu antivirus pueden mostrar una advertencia. Si prefieres no confiar en el binario, puedes compilarlo tú mismo: ver [docs/compilar.md](docs/compilar.md).
 
+### ¿Instalador o portátil?
+
+| | Instalador (`FirmadorPDF-Setup-X.Y.Z.exe`, ~40 MB) | Portátil (`FirmadorPDF-portable-X.Y.Z.zip`, ~58 MB) |
+| --- | --- | --- |
+| Para quién | Tu equipo de trabajo de siempre | Equipos donde no puedes o no quieres instalar |
+| Qué hace | Instala en tu usuario (sin administrador), acceso en el menú Inicio, desinstalador | Nada: descomprimes la carpeta y ejecutas `FirmadorPDF.exe` |
+| Actualizar | Ejecuta el instalador nuevo encima | Reemplaza la carpeta |
+| Quitarlo | Desde «Aplicaciones instaladas» de Windows | Borra la carpeta |
+
+El portátil sirve para llevarlo en una memoria USB, usarlo en un equipo prestado o de un cliente, o en un equipo con permisos restringidos. No deja nada instalado; solo guarda tu idioma en `%APPDATA%\FirmadorMasivoPDF`. Descomprime **toda** la carpeta antes de ejecutar (no abras el `.exe` desde dentro del `.zip`).
+
 ## Uso
 
 La guía paso a paso está en [docs/guia-de-usuario.md](docs/guia-de-usuario.md). Sobre la validez de las firmas, el sello de tiempo y por qué un lector de PDF puede decir «validez desconocida», lee [docs/validez-legal.md](docs/validez-legal.md).
