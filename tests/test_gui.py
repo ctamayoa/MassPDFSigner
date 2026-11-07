@@ -91,8 +91,10 @@ def preparar(app, certs, entrada, salida, recursivo=True):
 def corrida(app):
     app.mensajes.clear()
     app._iniciar()
-    assert esperar(app, lambda: any(m[1] in ("Listo", "Terminado con avisos", "Proceso detenido", "Sin PDFs")
-                                    or m[0] == "showerror" or m[1].startswith("Falta")
+    from firmador_masivo import i18n
+    finales = {v for k in ("fin.listo_t", "fin.avisos_t", "fin.detenido_t", "fin.vacio_t") for v in i18n.en_todos(k)}
+    iniciales = {v for k in ("init.falta_t", "init.pos_t", "init.iguales_t") for v in i18n.en_todos(k)}
+    assert esperar(app, lambda: any(m[1] in finales or m[1] in iniciales or m[0] == "showerror"
                                     for m in app.mensajes))
     return app.mensajes[-1]
 

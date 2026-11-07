@@ -56,17 +56,17 @@ def test_ruta_larga_agrega_prefijo():
 
 # ---------------------------------------------------------------- informes
 def _estadisticas(tmp_path):
-    t = time.time()
+    ahora = time.time()
     reg = [
-        {"archivo": "a/uno.pdf", "estado": "firmado", "segundos": 0.2, "kb": 120.0, "hora": t, "mensaje": "", "ajuste": None},
-        {"archivo": "a/dos.pdf", "estado": "firmado", "segundos": 0.4, "kb": 80.0, "hora": t, "mensaje": "", "ajuste": 18},
-        {"archivo": "b/tres.pdf", "estado": "omitido", "segundos": 0.0, "kb": 10.0, "hora": t, "mensaje": "", "ajuste": None},
-        {"archivo": "b/cuatro.pdf", "estado": "error", "segundos": 0.1, "kb": 1.0, "hora": t,
+        {"archivo": "a/uno.pdf", "estado": "firmado", "segundos": 0.2, "kb": 120.0, "hora": ahora, "mensaje": "", "ajuste": None},
+        {"archivo": "a/dos.pdf", "estado": "firmado", "segundos": 0.4, "kb": 80.0, "hora": ahora, "mensaje": "", "ajuste": 18},
+        {"archivo": "b/tres.pdf", "estado": "omitido", "segundos": 0.0, "kb": 10.0, "hora": ahora, "mensaje": "", "ajuste": None},
+        {"archivo": "b/cuatro.pdf", "estado": "error", "segundos": 0.1, "kb": 1.0, "hora": ahora,
          "mensaje": t("error.danado"), "ajuste": None},
-        {"archivo": "b/cinco.pdf", "estado": "sin_espacio", "segundos": 0.1, "kb": 5.0, "hora": t,
+        {"archivo": "b/cinco.pdf", "estado": "sin_espacio", "segundos": 0.1, "kb": 5.0, "hora": ahora,
          "mensaje": "No hay espacio libre para las firmas en la página 1", "ajuste": None},
     ]
-    return {"inicio": t - 60, "fin": t, "pausa_s": 5, "detenido": False, "total": 6, "registros": reg,
+    return {"inicio": ahora - 60, "fin": ahora, "pausa_s": 5, "detenido": False, "total": 6, "registros": reg,
             "visible": True, "qr": True, "pagina": "última", "tsa": None, "recursivo": True, "evitar": True,
             "entrada": str(tmp_path / "in"), "salida": str(tmp_path), "equipo": "EQUIPO", "usuario": "usuario",
             "firmantes": [("Firma 1", "Firmante Uno", "01/01/2099")]}
