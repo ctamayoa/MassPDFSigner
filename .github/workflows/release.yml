@@ -39,7 +39,7 @@ jobs:
         run: >
           pyinstaller --onefile --windowed --name FirmadorPDF --paths src
           --collect-all pyhanko --collect-all pyhanko_certvalidator
-          --collect-all pymupdf --collect-all aiohttp --collect-all qrcode
+          --collect-all pymupdf --collect-all aiohttp --collect-all qrcode --collect-data firmador_masivo
           packaging/firmador_pdf.py
 
       - name: Calcular SHA256

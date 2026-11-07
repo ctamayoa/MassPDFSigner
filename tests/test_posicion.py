@@ -108,9 +108,10 @@ def test_cada_pdf_usa_su_tamano(tmp_path):
 
 
 def test_pdf_danado_falla_y_se_traduce(tmp_path):
-    from firmador_masivo.errores import MSG_DANADO, describir_error
+    from firmador_masivo.errores import describir_error
+    from firmador_masivo.i18n import t
     mal = tmp_path / "malo.pdf"
     mal.write_bytes(b"esto no es un pdf")
     with pytest.raises(Exception) as e:
         cajas_para_pdf(str(mal), "ultima", 1, FRAC)
-    assert describir_error(e.value) == MSG_DANADO
+    assert describir_error(e.value) == t("error.danado")

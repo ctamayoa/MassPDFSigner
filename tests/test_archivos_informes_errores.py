@@ -8,6 +8,7 @@ import pytest
 import firmador_masivo
 from firmador_masivo import errores
 from firmador_masivo.archivos import listar_pdfs, ruta_larga
+from firmador_masivo.i18n import t
 from firmador_masivo.informes import armar_resumen, fmt_hms, guardar_informes, resumen_corto
 
 
@@ -61,7 +62,7 @@ def _estadisticas(tmp_path):
         {"archivo": "a/dos.pdf", "estado": "firmado", "segundos": 0.4, "kb": 80.0, "hora": t, "mensaje": "", "ajuste": 18},
         {"archivo": "b/tres.pdf", "estado": "omitido", "segundos": 0.0, "kb": 10.0, "hora": t, "mensaje": "", "ajuste": None},
         {"archivo": "b/cuatro.pdf", "estado": "error", "segundos": 0.1, "kb": 1.0, "hora": t,
-         "mensaje": errores.MSG_DANADO, "ajuste": None},
+         "mensaje": t("error.danado"), "ajuste": None},
         {"archivo": "b/cinco.pdf", "estado": "sin_espacio", "segundos": 0.1, "kb": 5.0, "hora": t,
          "mensaje": "No hay espacio libre para las firmas en la página 1", "ajuste": None},
     ]
@@ -112,13 +113,13 @@ def test_guardar_informes_csv(tmp_path):
 
 # ---------------------------------------------------------------- errores
 @pytest.mark.parametrize("exc,esperado", [
-    (RuntimeError("Failed to open stream"), errores.MSG_DANADO),
-    (RuntimeError("Illegal PDF header"), errores.MSG_DANADO),
-    (RuntimeError("Could not read malformed PDF file"), errores.MSG_DANADO),
-    (RuntimeError("File has not been decrypted"), errores.MSG_CIFRADO),
-    (PermissionError("denegado: C:\\secreto\\x.pdf"), errores.MSG_ACCESO),
-    (FileNotFoundError("C:\\secreto\\x.pdf"), errores.MSG_NO_EXISTE),
-    (ValueError("algo raro interno"), errores.MSG_GENERICO),
+    (RuntimeError("Failed to open stream"), t("error.danado")),
+    (RuntimeError("Illegal PDF header"), t("error.danado")),
+    (RuntimeError("Could not read malformed PDF file"), t("error.danado")),
+    (RuntimeError("File has not been decrypted"), t("error.cifrado")),
+    (PermissionError("denegado: C:\\secreto\\x.pdf"), t("error.acceso")),
+    (FileNotFoundError("C:\\secreto\\x.pdf"), t("error.no_existe")),
+    (ValueError("algo raro interno"), t("error.generico")),
 ])
 def test_describir_error(exc, esperado):
     texto = errores.describir_error(exc)
@@ -133,4 +134,4 @@ def test_pyhanko_pdf_danado_se_traduce(tmp_path):
     for contenido in (b"esto no es un pdf", b"%PDF-1.4\nbasura", b""):
         with pytest.raises(Exception) as e:
             IncrementalPdfFileWriter(io.BytesIO(contenido), strict=False)
-        assert errores.describir_error(e.value) == errores.MSG_DANADO
+        assert errores.describir_error(e.value) == t("error.danado")

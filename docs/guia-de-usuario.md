@@ -12,6 +12,10 @@ Necesitas:
 
 ## Paso a paso
 
+### 0. Idioma
+
+Arriba a la derecha puedes elegir **español, English o Português**. La ventana se vuelve a dibujar sin perder lo que ya escribiste, y el programa recuerda tu elección. Solo se puede cambiar cuando no hay una firma en curso. El texto de la firma visible, el QR y los informes salen en el idioma elegido.
+
 ### 1. Elige las firmas
 
 En **Firma 1**, pulsa **Buscar...** y elige tu archivo `.p12`. Escribe la contraseña.

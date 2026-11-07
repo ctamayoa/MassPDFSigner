@@ -1,4 +1,7 @@
-"""Informes de cada corrida: resumen de texto y registro CSV."""
+"""Informes de cada corrida: resumen de texto y registro CSV.
+
+El resumen y el mensaje del CSV salen en el idioma de la interfaz; los encabezados y los
+estados del CSV (firmado, omitido, error, sin_espacio) no cambian, para no romper planillas."""
 import csv
 import datetime
 import os
@@ -6,6 +9,7 @@ import statistics
 
 from ._version import __version__
 from .archivos import ruta_larga
+from .i18n import t
 
 
 def fmt_hms(segundos):
@@ -15,6 +19,10 @@ def fmt_hms(segundos):
 
 def fmt_fecha(ts):
     return datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _si_no(v):
+    return t("inf.si") if v else t("inf.no")
 
 
 def armar_resumen(e):
@@ -31,57 +39,58 @@ def armar_resumen(e):
     carpetas_total = len({os.path.dirname(r["archivo"]) for r in e["registros"]})
     carpetas_firm = len({os.path.dirname(r["archivo"]) for r in hechos})
     mb = sum(r["kb"] for r in hechos) / 1024
+    estado = t("inf.estado_detenido") if e["detenido"] else t("inf.estado_completado")
     L = []
-    L.append(f"INFORME DE FIRMADO MASIVO - Firmador Masivo PDF v{__version__}")
+    L.append(t("inf.titulo", version=__version__))
     L.append("=" * 62)
-    L.append(f"Estado final        : {'DETENIDO por el usuario' if e['detenido'] else 'COMPLETADO'}")
-    L.append(f"Hora de inicio      : {fmt_fecha(e['inicio'])}")
-    L.append(f"Hora de término     : {fmt_fecha(e['fin'])}")
-    L.append(f"Duración total      : {fmt_hms(total_s)}")
-    L.append(f"Tiempo en pausa     : {fmt_hms(e['pausa_s'])}")
-    L.append(f"Tiempo efectivo     : {fmt_hms(efectivo)}")
+    L.append(t("inf.estado", v=estado))
+    L.append(t("inf.hora_inicio", v=fmt_fecha(e["inicio"])))
+    L.append(t("inf.hora_fin", v=fmt_fecha(e["fin"])))
+    L.append(t("inf.duracion", v=fmt_hms(total_s)))
+    L.append(t("inf.pausa", v=fmt_hms(e["pausa_s"])))
+    L.append(t("inf.efectivo", v=fmt_hms(efectivo)))
     L.append("")
-    L.append("RESULTADO")
-    L.append(f"PDFs encontrados    : {e['total']}")
-    L.append(f"Firmados            : {len(hechos)}")
-    L.append(f"Omitidos (ya estaban): {omit}")
-    L.append(f"Con posición ajustada: {len(ajustados)}")
-    L.append(f"SIN ESPACIO (no firmados): {len(sine)}")
-    L.append(f"Con error           : {len(err)}")
-    L.append(f"Pendientes          : {pendientes}")
-    L.append(f"Carpetas procesadas : {carpetas_total} (con PDFs firmados: {carpetas_firm})")
-    L.append(f"Tamaño firmado      : {mb:.1f} MB")
+    L.append(t("inf.resultado"))
+    L.append(t("inf.encontrados", v=e["total"]))
+    L.append(t("inf.firmados", v=len(hechos)))
+    L.append(t("inf.omitidos", v=omit))
+    L.append(t("inf.ajustados", v=len(ajustados)))
+    L.append(t("inf.sin_espacio", v=len(sine)))
+    L.append(t("inf.con_error", v=len(err)))
+    L.append(t("inf.pendientes", v=pendientes))
+    L.append(t("inf.carpetas", total=carpetas_total, firm=carpetas_firm))
+    L.append(t("inf.tamano", v=mb))
     L.append("")
-    L.append("RENDIMIENTO")
+    L.append(t("inf.rendimiento"))
     if seg:
-        L.append(f"Promedio por PDF    : {sum(seg) / len(seg):.2f} s")
-        L.append(f"Mediana             : {statistics.median(seg):.2f} s")
-        L.append(f"Más rápido          : {min(seg):.2f} s")
-        L.append(f"Más lento           : {max(seg):.2f} s ({max(hechos, key=lambda r: r['segundos'])['archivo']})")
+        L.append(t("inf.promedio", v=sum(seg) / len(seg)))
+        L.append(t("inf.mediana", v=statistics.median(seg)))
+        L.append(t("inf.rapido", v=min(seg)))
+        L.append(t("inf.lento", v=max(seg), archivo=max(hechos, key=lambda r: r["segundos"])["archivo"]))
         if efectivo > 0:
-            L.append(f"Velocidad           : {len(hechos) / (efectivo / 60):.1f} PDFs por minuto")
+            L.append(t("inf.velocidad", v=len(hechos) / (efectivo / 60)))
     else:
-        L.append("(no se firmó ningún PDF en esta corrida)")
+        L.append(t("inf.ninguno"))
     L.append("")
-    L.append("CONFIGURACIÓN USADA")
+    L.append(t("inf.config"))
     for etiqueta, nombre, vence in e["firmantes"]:
-        L.append(f"{etiqueta:<20}: {nombre} (certificado vigente hasta {vence})")
-    L.append(f"Firma visible       : {'sí' if e['visible'] else 'no'}" +
-             (f" (página {e['pagina']}, con QR: {'sí' if e['qr'] else 'no'})" if e["visible"] else ""))
-    L.append(f"Evitar tapar contenido: {'sí' if e.get('evitar') else 'no'}")
-    L.append(f"Sello de tiempo     : {e['tsa'] if e['tsa'] else 'no'}")
-    L.append(f"Incluye subcarpetas : {'sí' if e['recursivo'] else 'no'}")
-    L.append(f"Carpeta de origen   : {e['entrada']}")
-    L.append(f"Carpeta de salida   : {e['salida']}")
-    L.append(f"Equipo / usuario    : {e['equipo']} / {e['usuario']}")
+        L.append(t("inf.certificado", etiqueta=etiqueta, nombre=nombre, vence=vence))
+    detalle = t("inf.visible_detalle", pagina=e["pagina"], qr=_si_no(e["qr"])) if e["visible"] else ""
+    L.append(t("inf.visible", v=_si_no(e["visible"])) + detalle)
+    L.append(t("inf.evitar", v=_si_no(e.get("evitar"))))
+    L.append(t("inf.tsa", v=e["tsa"] if e["tsa"] else t("inf.no")))
+    L.append(t("inf.subcarpetas", v=_si_no(e["recursivo"])))
+    L.append(t("inf.origen", v=e["entrada"]))
+    L.append(t("inf.salida", v=e["salida"]))
+    L.append(t("inf.equipo", equipo=e["equipo"], usuario=e["usuario"]))
     if sine:
         L.append("")
-        L.append("ARCHIVOS SIN ESPACIO LIBRE (NO SE FIRMARON, revisar a mano)")
+        L.append(t("inf.lista_sin_espacio"))
         for r in sine:
             L.append(f"- {r['archivo']}")
     if err:
         L.append("")
-        L.append("ARCHIVOS CON ERROR")
+        L.append(t("inf.lista_errores"))
         for r in err:
             L.append(f"- {r['archivo']}: {r['mensaje']}")
     return "\n".join(L)
@@ -97,18 +106,18 @@ def resumen_corto(e):
     sine = sum(1 for r in e["registros"] if r["estado"] == "sin_espacio")
     ajust = sum(1 for r in hechos if r.get("ajuste"))
     pend = e["total"] - len(e["registros"])
-    L = [f"Inicio:   {fmt_fecha(e['inicio'])}",
-         f"Término:  {fmt_fecha(e['fin'])}",
-         f"Duración: {fmt_hms(total_s)}" + (f"  (pausa: {fmt_hms(e['pausa_s'])})" if e["pausa_s"] >= 1 else ""),
+    L = [t("corto.inicio", v=fmt_fecha(e["inicio"])),
+         t("corto.fin", v=fmt_fecha(e["fin"])),
+         t("corto.duracion", v=fmt_hms(total_s)) + (t("corto.pausa", v=fmt_hms(e["pausa_s"])) if e["pausa_s"] >= 1 else ""),
          "",
-         f"Firmados: {len(hechos)}   Omitidos: {omit}   Errores: {err}" + (f"   Pendientes: {pend}" if pend else "")]
+         t("corto.conteo", ok=len(hechos), omit=omit, err=err) + (t("corto.pendientes", v=pend) if pend else "")]
     if ajust:
-        L.append(f"Con posición ajustada: {ajust}")
+        L.append(t("corto.ajustadas", v=ajust))
     if sine:
-        L.append(f"SIN ESPACIO LIBRE (no se firmaron): {sine}  -> ver el CSV")
+        L.append(t("corto.sin_espacio", v=sine))
     if hechos and efectivo > 0:
-        L.append(f"Promedio: {sum(r['segundos'] for r in hechos) / len(hechos):.2f} s por PDF "
-                 f"({len(hechos) / (efectivo / 60):.1f} PDFs/min)")
+        L.append(t("corto.promedio", prom=sum(r["segundos"] for r in hechos) / len(hechos),
+                   vel=len(hechos) / (efectivo / 60)))
     return "\n".join(L)
 
 

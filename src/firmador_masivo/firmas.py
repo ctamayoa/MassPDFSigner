@@ -10,6 +10,7 @@ from pyhanko.stamp import QRPosition, QRStampStyle, TextStampStyle
 
 from .archivos import ruta_larga
 from .errores import log
+from .i18n import t
 
 
 def cargar_firmante(ruta_p12, clave):
@@ -18,7 +19,7 @@ def cargar_firmante(ruta_p12, clave):
         pfx_file=ruta_p12, passphrase=clave.encode("utf-8")
     )
     if firmante is None:
-        raise ValueError("Contraseña incorrecta o archivo .p12 dañado")
+        raise ValueError(t("rev.error_interno"))
     return firmante
 
 
@@ -34,16 +35,14 @@ def probar_sellador(url, usuario="", clave=""):
     import asyncio
     import hashlib
     if not url.strip().lower().startswith(("http://", "https://")):
-        return False, "La dirección debe empezar con http:// o https://"
+        return False, t("tsa.url_invalida")
     try:
         sellador = crear_sellador(url, usuario, clave)
         asyncio.run(sellador.async_timestamp(hashlib.sha256(b"prueba").digest(), "sha256"))
-        return True, "El servidor respondió con un sello de tiempo válido."
+        return True, t("tsa.ok")
     except Exception as e:
         log.debug("Falló la prueba del servidor de sello de tiempo", exc_info=e)
-        return False, ("No se pudo obtener el sello de tiempo.\n\n"
-                       "Revisa la dirección del servidor, el usuario y la clave (si los pide) "
-                       "y tu conexión a internet.")
+        return False, t("tsa.fallo")
 
 
 def nombre_titular(cert):
@@ -54,27 +53,27 @@ def texto_qr(firmante):
     """Texto del QR: resumen de la firma (firmante y fecha)."""
     nombre = nombre_titular(firmante.signing_cert)
     fecha = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
-    return (
-        f"FIRMADO POR: {nombre}\n"
-        "RAZON: \n"
-        "LOCALIZACION: \n"
-        f"FECHA: {fecha}\n"
-        "Firmado digitalmente con Firmador Masivo PDF"
-    )
+    return "\n".join([
+        t("qr.firmado_por", nombre=nombre),
+        t("qr.razon"),
+        t("qr.localizacion"),
+        t("qr.fecha", fecha=fecha),
+        t("qr.pie"),
+    ])
 
 
 def revisar_firma(ruta_p12, clave):
     """Devuelve (ok, texto). Abre el .p12 con la clave y lee titular y vigencia."""
     if not ruta_p12:
-        return False, "No has seleccionado el archivo .p12."
+        return False, t("rev.sin_archivo")
     if not os.path.isfile(ruta_p12):
-        return False, "No se encuentra el archivo seleccionado."
+        return False, t("rev.no_existe")
     if not clave:
-        return False, "Falta la contraseña."
+        return False, t("rev.sin_clave")
     try:
         firmante = cargar_firmante(ruta_p12, clave)
     except Exception:
-        return False, "Contraseña incorrecta o archivo .p12 dañado."
+        return False, t("rev.clave_mala")
     cert = firmante.signing_cert
     nombre = nombre_titular(cert)
     validez = cert["tbs_certificate"]["validity"]
@@ -82,12 +81,12 @@ def revisar_firma(ruta_p12, clave):
     hasta = validez["not_after"].native
     ahora = datetime.datetime.now(datetime.timezone.utc)
     if hasta < ahora:
-        return False, f"{nombre}\nVENCIDA el {hasta:%d/%m/%Y}. Las firmas saldrían inválidas."
+        return False, t("rev.vencida", nombre=nombre, fecha=f"{hasta:%d/%m/%Y}")
     if desde > ahora:
-        return False, f"{nombre}\nAún no es válida (empieza el {desde:%d/%m/%Y})."
+        return False, t("rev.futura", nombre=nombre, fecha=f"{desde:%d/%m/%Y}")
     dias = (hasta - ahora).days
-    aviso = f"  (vence en {dias} días)" if dias <= 30 else ""
-    return True, f"{nombre}\nVálida hasta el {hasta:%d/%m/%Y}{aviso}"
+    aviso = t("rev.vence_en", dias=dias) if dias <= 30 else ""
+    return True, t("rev.valida", nombre=nombre, fecha=f"{hasta:%d/%m/%Y}", aviso=aviso)
 
 
 def firmar_un_pdf(ruta_entrada, ruta_salida, firmantes, pagina, visible, tsa=None, qr=False):
@@ -107,14 +106,14 @@ def firmar_un_pdf(ruta_entrada, ruta_salida, firmantes, pagina, visible, tsa=Non
         if visible and qr:
             # Recuadro con QR a la izquierda y texto a la derecha
             estilo = QRStampStyle(
-                stamp_text="Firmado electrónicamente por:\n%(signer)s",
+                stamp_text=t("sello.texto_qr"),
                 border_width=1,
                 qr_position=QRPosition.LEFT_OF_TEXT,
             )
             parametros = {"url": texto_qr(firmante)}
         elif visible:
             estilo = TextStampStyle(
-                stamp_text="Firmado electrónicamente por:\n%(signer)s\nFecha: %(ts)s",
+                stamp_text=t("sello.texto"),
                 border_width=1,
             )
         meta = signers.PdfSignatureMetadata(field_name=campo)

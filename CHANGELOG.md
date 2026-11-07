@@ -17,6 +17,7 @@ Primera versión pública. Parte de la versión interna «10» del programa.
 - Documentación: guía de usuario, cómo compilar y nota sobre validez legal.
 - `README`, `CONTRIBUTING`, `SECURITY` y plantillas de issues.
 - Licencia GNU AGPL-3.0.
+- Interfaz en español, inglés y portugués (Brasil), con selector de idioma en la ventana. El idioma elegido se recuerda; la primera vez se toma el de Windows. Los textos viven en `src/firmador_masivo/idiomas/*.json`. El texto de la firma visible, el QR y los informes siguen el idioma elegido.
 
 ### Changed
 - La versión vive en un único lugar: `src/firmador_masivo/_version.py`.

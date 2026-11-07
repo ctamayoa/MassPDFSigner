@@ -1,5 +1,10 @@
 """Utilidades de prueba. Todo se genera al vuelo: no hay certificados ni PDFs en el repo."""
 import datetime
+import os
+import tempfile
+
+# El idioma elegido se guarda en un archivo de configuración: las pruebas usan una carpeta temporal
+os.environ["FIRMADOR_CONFIG_DIR"] = tempfile.mkdtemp(prefix="firmador_cfg_")
 
 import pymupdf
 import pytest
@@ -93,3 +98,12 @@ def firmas_de(ruta):
     with open(ruta, "rb") as f:
         r = PdfFileReader(f)
         return [(s.field_name, validate_pdf_signature(s).intact) for s in r.embedded_signatures]
+
+
+@pytest.fixture(autouse=True)
+def idioma_espanol():
+    """Cada prueba parte en español; las que cambian de idioma lo restauran."""
+    from firmador_masivo import i18n
+    i18n.fijar_idioma("es")
+    yield
+    i18n.fijar_idioma("es")

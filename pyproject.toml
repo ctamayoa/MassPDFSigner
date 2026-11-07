@@ -37,6 +37,9 @@ firmador-pdf = "firmador_masivo.gui:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"firmador_masivo.idiomas" = ["*.json"]
+
 [tool.setuptools.dynamic]
 version = { attr = "firmador_masivo._version.__version__" }
 

@@ -37,6 +37,15 @@ Todo cambio debe dejar las pruebas en verde. Si corriges un error, añade una pr
 - **Versión**: se cambia solo en `src/firmador_masivo/_version.py`.
 - **Dependencia AGPL**: PyMuPDF es AGPL-3.0, por eso el proyecto lo es. No agregues dependencias con licencias incompatibles.
 
+## Idiomas
+
+Los textos de la interfaz están en `src/firmador_masivo/idiomas/` (`es.json`, `en.json`, `pt.json`). El español es el idioma base.
+
+- Todo texto nuevo va como clave en `es.json` y se usa con `t("clave")` (nunca escrito directo en el código).
+- Agrega la misma clave, con los mismos marcadores `{nombre}`, en los demás archivos. Las pruebas fallan si falta alguna o si sobra una clave sin usar.
+- Para añadir un idioma: crea `idiomas/<código>.json` con todas las claves y agrega el código a `IDIOMAS` en `i18n.py`.
+- Los encabezados y estados del CSV (`firmado`, `omitido`, `error`, `sin_espacio`) no se traducen.
+
 ## Enviar un cambio
 
 1. Crea una rama a partir de `main`.

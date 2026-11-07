@@ -10,6 +10,7 @@ Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una 
 - **Subcarpetas**: puede recorrer todo un árbol y replica la misma estructura en la carpeta de salida. Nunca modifica los originales.
 - **Reanudar**: omite lo que ya está firmado, así puedes continuar si se interrumpe. También puedes pausar, reanudar y detener.
 - **Sello de tiempo** (TSA) opcional.
+- **Tres idiomas**: español, inglés y portugués (Brasil). Se cambia desde la propia ventana.
 - **Validación previa** de los certificados (contraseña y vigencia) antes de empezar.
 - **Informes** en cada corrida: `resumen_firmado_*.txt`, `registro_firmado_*.csv` (se abre en Excel) y `errores_firmado.txt`.
 
@@ -50,6 +51,8 @@ pytest
 ```
 
 Los certificados y PDFs de prueba se generan al vuelo: el repositorio no contiene ningún certificado. Las pruebas de la ventana necesitan pantalla; en Linux se ejecutan con `xvfb-run -a pytest`.
+
+Read this in English: [README.en.md](README.en.md).
 
 ## Contribuir y seguridad
 

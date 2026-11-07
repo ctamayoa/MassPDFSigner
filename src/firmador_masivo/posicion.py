@@ -5,6 +5,7 @@ except ImportError:
     import fitz  # PyMuPDF (nombre antiguo)
 
 from .archivos import ruta_larga
+from .i18n import en_todos, t
 
 COLORES = {1: "#d62828", 2: "#1d4ed8"}
 # Posiciones por defecto (fracciones de la página, origen arriba-izquierda)
@@ -17,6 +18,11 @@ def indice_pagina(total, modo, numero):
     if modo == "ultima":
         return total - 1
     return min(max(numero, 1), total) - 1
+
+
+def _marcas_de_sello():
+    """Inicios del texto de nuestras firmas en todos los idiomas (para no contarlas como contenido)."""
+    return [m for v in en_todos("sello.marcas") for m in v.split("|")]
 
 
 class SinEspacio(Exception):
@@ -39,7 +45,7 @@ def contenido_ocupado(page):
         if blk["type"] == 0:
             for ln in blk["lines"]:
                 texto = "".join(sp["text"] for sp in ln["spans"])
-                if not texto.strip() or "Firmado electr" in texto or "Firmado digitalmente" in texto:
+                if not texto.strip() or any(m in texto for m in _marcas_de_sello()):
                     continue
                 agregar(ln["bbox"])
         elif blk["type"] == 1 and fitz.Rect(blk["bbox"]).get_area() < 0.6 * area:
@@ -72,7 +78,7 @@ def ubicar_cajas(page, cajas_vista, paso=6, margen=3, borde=12):
         for dy in ((0,) if k == 0 else (k * paso, -k * paso)):
             if libre(dy):
                 return {n: fitz.Rect(r.x0, r.y0 - dy, r.x1, r.y1 - dy) for n, r in cajas_vista.items()}, dy
-    raise SinEspacio("No hay espacio libre para las firmas en la página")
+    raise SinEspacio("")
 
 
 def cajas_para_pdf(ruta, modo, numero, fracciones, evitar=False):
@@ -92,8 +98,8 @@ def cajas_para_pdf(ruta, modo, numero, fracciones, evitar=False):
         if evitar:
             try:
                 vista, ajuste = ubicar_cajas(page, vista)
-            except SinEspacio as e:
-                raise SinEspacio(f"{e} {idx + 1}") from None
+            except SinEspacio:
+                raise SinEspacio(t("error.sin_espacio", n=idx + 1)) from None
         cajas = {}
         for n, rv in vista.items():
             r = fitz.Rect(rv) * page.derotation_matrix

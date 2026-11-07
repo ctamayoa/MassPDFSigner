@@ -38,9 +38,11 @@ def resetear(a):
     a.omitir.set(True); a.evitar.set(True); a.usar_tsa.set(False)
     a.tsa_url.set("http://timestamp.digicert.com")
     a.posicion.update(modo="ultima", numero=1, cajas={}, definida=False)
-    a.texto_pos.set("Posición: sin definir")
     a._detener.clear(); a._continuar.set(); a._corriendo = False
-    a._estado_botones(False); a.estado.set("Listo."); a.tiempo.set("")
+    a.tiempo.set("")
+    from firmador_masivo import i18n
+    i18n.fijar_idioma("es")
+    a._construir()          # vuelve a dibujar la ventana en español y con los botones en reposo
 
 
 @pytest.fixture
@@ -315,3 +317,55 @@ def test_pausar_y_reanudar(app, certs, tmp_path):
         return est["fase"] == 3 and any(m[1] == "Listo" for m in app.mensajes)
     assert esperar(app, cond)
     assert _cuenta(salida) == 30
+
+
+# ------------------------------------------------------------------ idioma
+@pytest.mark.parametrize("cod,boton,contrasena,posicion", [
+    ("en", "SIGN DOCUMENTS", "Password:", "Position: not set"),
+    ("pt", "ASSINAR DOCUMENTOS", "Senha:", "Posição: não definida"),
+    ("es", "FIRMAR DOCUMENTOS", "Contraseña:", "Posición: sin definir"),
+])
+def test_cambiar_idioma_redibuja_la_ventana(app, cod, boton, contrasena, posicion):
+    from firmador_masivo import i18n
+    app.p12_1.set("conservado.p12")                      # lo escrito no se pierde al cambiar
+    app.idioma_nombre.set(i18n.IDIOMAS[cod])
+    if cod == "es":                                      # parte de otro idioma para que haya cambio
+        i18n.fijar_idioma("en"); app._construir(); app.idioma_nombre.set(i18n.IDIOMAS["es"])
+    app._cambiar_idioma()
+    textos = textos_de_widgets(app)
+    assert boton in textos and contrasena in textos
+    assert app.texto_pos.get() == posicion
+    assert app.p12_1.get() == "conservado.p12"
+    assert i18n.idioma_actual() == cod
+
+
+def test_idioma_se_recuerda(app):
+    from firmador_masivo import i18n
+    app.idioma_nombre.set(i18n.IDIOMAS["pt"])
+    app._cambiar_idioma()
+    i18n.fijar_idioma("es")
+    assert i18n.iniciar() == "pt"
+
+
+def test_no_se_cambia_idioma_mientras_se_firma(app):
+    from firmador_masivo import i18n
+    app._corriendo = True
+    app.idioma_nombre.set(i18n.IDIOMAS["en"])
+    app._cambiar_idioma()
+    assert i18n.idioma_actual() == "es" and app.idioma_nombre.get() == i18n.IDIOMAS["es"]
+    app._corriendo = False
+
+
+def test_corrida_en_ingles(app, certs, tmp_path):
+    from firmador_masivo import i18n
+    entrada, salida = tmp_path / "in", tmp_path / "out"
+    crear_pdf(entrada / "a.pdf")
+    (entrada / "malo.pdf").write_bytes(b"esto no es un pdf")
+    preparar(app, certs, entrada, salida, recursivo=False)
+    i18n.fijar_idioma("en"); app._construir()
+    assert corrida(app)[1] == "Finished with warnings"
+    assert "The file is damaged or is not a valid PDF." in (salida / "errores_firmado.txt").read_text(encoding="utf-8")
+    texto = pymupdf.open(str(salida / "a.pdf"))[-1].get_text()
+    assert "Electronically signed by" in texto and "Firmado" not in texto
+    resumen = glob.glob(str(salida / "resumen_firmado_*.txt"))[0]
+    assert "MASS SIGNING REPORT" in open(resumen, encoding="utf-8").read()
