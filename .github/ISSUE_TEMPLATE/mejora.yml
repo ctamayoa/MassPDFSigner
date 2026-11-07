@@ -1,0 +1,19 @@
+name: Proponer una mejora
+description: Una idea para hacer el programa más útil
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qué necesitas resolver
+      description: Cuéntalo desde tu caso de uso, no desde la solución.
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Cómo te gustaría que funcione
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas que consideraste

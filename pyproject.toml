@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firmador-masivo-pdf"
+dynamic = ["version"]
+description = "Firma lotes de PDFs con uno o dos certificados .p12, sin consola."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+keywords = ["pdf", "firma electrónica", "firma digital", "pyhanko", "lote"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: Spanish",
+    "Topic :: Office/Business",
+]
+dependencies = [
+    "pyhanko",
+    "pyhanko-certvalidator",
+    "cryptography",
+    "pymupdf",
+    "aiohttp",
+    "qrcode",
+    "pillow",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pyinstaller", "opencv-python-headless"]
+
+[project.gui-scripts]
+firmador-pdf = "firmador_masivo.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "firmador_masivo._version.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -p no:cacheprovider"
+markers = ["gui: necesita pantalla (en Linux, xvfb-run)"]

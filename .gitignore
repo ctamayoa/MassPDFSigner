@@ -1,0 +1,30 @@
+# Secretos y datos reales: nunca al repositorio
+*.p12
+*.pfx
+*.pem
+*.key
+.env
+
+# Compilación
+dist/
+build/
+*.spec
+*.egg-info/
+__pycache__/
+*.pyc
+
+# Entornos y herramientas
+.venv/
+venv/
+.pytest_cache/
+.idea/
+.vscode/
+graphify-out/
+
+# Material de trabajo del autor (no es parte del proyecto público)
+/codigo/
+/referencia_pruebas/
+/HANDOFF.md
+/PROMPT_INICIAL.md
+/CLAUDE.md
+/.claude/
