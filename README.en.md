@@ -15,6 +15,7 @@ The interface is available in **Spanish, English and Portuguese (Brazil)**; swit
 - **Resume**: skips what is already signed. You can also pause, resume and stop.
 - Optional **timestamp** (TSA).
 - **Certificate check** (password and validity) before starting.
+- **Signed-document verifier**: checks integrity, later changes, signer, date, validity and, with your root certificates, the issuer. CSV report.
 - **Reports** on every run: `resumen_firmado_*.txt`, `registro_firmado_*.csv` (opens in Excel) and `errores_firmado.txt`.
 
 ## Install (Windows)

@@ -6,6 +6,12 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [1.2.0] - Sin publicar
+
+### Added
+- Verificador de documentos firmados (botón **Verificar documentos...**): integridad, cambios posteriores a la firma, firmante, fecha, vigencia del certificado al firmar y cadena de confianza con certificados raíz que carga el usuario. Funciona con un PDF o una carpeta y guarda un informe CSV. Es una ayuda técnica: no consulta revocación en línea.
+- La autoprueba del programa compilado también verifica el PDF que firma.
+
 ## [1.1.0] - Sin publicar
 
 ### Added
@@ -47,7 +53,8 @@ Primera versión pública. Parte de la versión interna «10» del programa.
 - Ortografía de la interfaz y de los informes (Contraseña, posición, código, página, última…).
 - Un PDF dañado, vacío o que no es un PDF ahora se informa como «El archivo está dañado o no es un PDF válido.» en lugar de «Failed to open stream».
 
-[Unreleased]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/ctamayoa/MassPDFSigner/releases/tag/v1.0.0

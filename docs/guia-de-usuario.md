@@ -67,6 +67,25 @@ Pulsa **FIRMAR DOCUMENTOS**. Verás el avance, el tiempo transcurrido y una esti
 - **Pausar**: termina el archivo actual y espera. **Reanudar** continúa.
 - **Detener**: termina el archivo actual y para. Lo ya firmado se conserva. Para continuar, vuelve a pulsar **FIRMAR** con las mismas carpetas y la casilla de omitir marcada.
 
+## Verificar documentos firmados
+
+Para revisar PDFs que ya tienen firma (los tuyos o los que te envían), pulsa **Verificar documentos...** en la ventana principal.
+
+1. En **PDF o carpeta**, elige un archivo o una carpeta (con **Incluir subcarpetas** si quieres recorrerla entera).
+2. Si tienes los certificados de la entidad que emitió las firmas (archivos `.crt`, `.cer` o `.pem`), ponlos en una carpeta y elígela en **Certificados raíz**. Es opcional, pero sin ellos el programa no puede confirmar quién emitió el certificado.
+3. Pulsa **VERIFICAR**. Cada firma aparece en una línea con su resultado.
+4. **Guardar informe (CSV)** deja la tabla en un archivo que abre Excel.
+
+| Resultado | Qué significa |
+| --- | --- |
+| **Válida** | El documento no cambió, el certificado estaba vigente al firmar y el emisor es uno de tus certificados raíz. |
+| **Íntegra, emisor sin verificar** | El documento no cambió, pero no se pudo confirmar al emisor (no cargaste certificados raíz o no coinciden). |
+| **Revisar** | Hay cambios posteriores a la firma que no son otra firma, o el certificado no estaba vigente al firmar. |
+| **Inválida** | El documento fue modificado después de firmar o la firma está dañada. |
+| **Sin firmas** / **No se pudo leer** | El PDF no tiene firmas electrónicas, o el archivo está dañado o protegido. |
+
+Es una ayuda técnica: **no consulta si el certificado fue revocado** y no reemplaza la validación oficial de la entidad de certificación. Para un trámite que exige validación oficial, usa el validador de tu entidad.
+
 ## Qué verás al terminar
 
 En la carpeta de salida quedan los PDFs firmados y estos archivos:

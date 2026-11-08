@@ -43,6 +43,9 @@ def autoprueba():
         pagina.get_pixmap().tobytes("png")
         assert "Firmado electr" in pagina.get_text()
         assert all(claves(c) for c in IDIOMAS) and t("ui.firmar")
+        from .validacion import verificar_pdf
+        resultado = verificar_pdf(salida)
+        assert resultado["error"] is None and resultado["firmas"][0]["integridad"]
         return 0
     except Exception:
         return 1

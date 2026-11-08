@@ -16,6 +16,7 @@ Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una 
 - **Sello de tiempo** (TSA) opcional.
 - **Tres idiomas**: español, inglés y portugués (Brasil). Se cambia desde la propia ventana.
 - **Validación previa** de los certificados (contraseña y vigencia) antes de empezar.
+- **Verificador de documentos firmados**: revisa integridad, cambios posteriores, firmante, fecha, vigencia y, con tus certificados raíz, el emisor. Informe en CSV.
 - **Informes** en cada corrida: `resumen_firmado_*.txt`, `registro_firmado_*.csv` (se abre en Excel) y `errores_firmado.txt`.
 
 Rendimiento de referencia: unos 0,2 segundos por PDF sin sello de tiempo.

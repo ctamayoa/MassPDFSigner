@@ -315,6 +315,34 @@ def test_selector_con_cuatro_firmas(app, tmp_path):
     assert set(app.posicion["cajas"]) == {1, 2, 3, 4} and app.posicion["definida"]
 
 
+def test_ventana_verificar_documentos(app, certs, tmp_path):
+    from firmador_masivo.gui import VentanaVerificar
+    entrada, salida = tmp_path / "in", tmp_path / "out"
+    crear_pdf(entrada / "a.pdf")
+    preparar(app, certs, entrada, salida, recursivo=False)
+    assert corrida(app)[1] == "Listo"
+    crear_pdf(salida / "libre.pdf")
+    (salida / "malo.pdf").write_bytes(b"esto no es un pdf")
+
+    app.btn_ver.invoke(); app.update()
+    ven = [w for w in app.winfo_children() if isinstance(w, VentanaVerificar)][0]
+    assert str(ven.btn_guardar.cget("state")) == "disabled"
+    ven._verificar()                                   # sin elegir nada: avisa y no hace nada
+    assert app.mensajes[-1][1] == "Falta el documento"
+
+    ven.origen.set(str(salida)); ven.recursivo.set(False)
+    ven._verificar()
+    assert esperar(app, lambda: ven.estado.get().startswith("Listo:"))
+    filas = {(f["archivo"], f["campo"]): f for f in ven.filas}
+    assert filas[("a.pdf", "Firma1")]["veredicto"] == "integra"
+    assert filas[("a.pdf", "Firma2")]["veredicto"] == "integra"
+    assert filas[("libre.pdf", "")]["veredicto"] == "sin_firmas"
+    assert filas[("malo.pdf", "")]["veredicto"] == "error"
+    assert "Válidas: 0. Íntegras sin verificar emisor: 1." in ven.estado.get()
+    assert len(ven.tabla.get_children()) == 4 and str(ven.btn_guardar.cget("state")) == "normal"
+    assert any("Íntegra, emisor sin verificar" in str(ven.tabla.item(i, "values")) for i in ven.tabla.get_children())
+
+
 def test_carpeta_vacia(app, certs, tmp_path):
     entrada = tmp_path / "in"; entrada.mkdir()
     preparar(app, certs, entrada, tmp_path / "out")
