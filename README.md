@@ -1,5 +1,9 @@
 # Firmador Masivo PDF
 
+**Español** · [English](README.en.md)
+
+> **English:** Windows desktop app that batch-signs hundreds or thousands of PDFs with 1 to 4 `.p12` certificates, with visible signatures, optional QR and timestamp. The interface is in Spanish, English and Brazilian Portuguese. **[Read the README in English](README.en.md)** · [Download](https://github.com/ctamayoa/MassPDFSigner/releases/latest)
+
 Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una sola vez con uno a cuatro certificados de firma electrónica (`.p12` / `.pfx`). No necesita consola: eliges tus firmas, la carpeta con los PDFs, dibujas con el mouse dónde va cada firma y pulsas **FIRMAR DOCUMENTOS**.
 
 ## Qué hace
