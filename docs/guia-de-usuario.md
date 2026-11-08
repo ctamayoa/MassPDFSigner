@@ -15,7 +15,7 @@ Para quitarlo: el instalado, desde *Aplicaciones instaladas* de Windows; el port
 
 Necesitas:
 
-- Tu archivo de firma electrónica (`.p12` o `.pfx`) y su contraseña. Si vas a usar dos firmas, necesitas los dos archivos y las dos contraseñas.
+- Tu archivo de firma electrónica (`.p12` o `.pfx`) y su contraseña. Si vas a usar varias firmas (hasta cuatro), necesitas un archivo y una contraseña por cada una.
 - Una carpeta con los PDFs que quieres firmar.
 - Una carpeta **distinta** donde se guardarán los PDFs firmados. Los originales nunca se modifican.
 
@@ -27,9 +27,9 @@ Arriba a la derecha puedes elegir **español, English o Português**. La ventana
 
 ### 1. Elige las firmas
 
-En **Firma 1**, pulsa **Buscar...** y elige tu archivo `.p12`. Escribe la contraseña.
+En cada línea, pulsa **Buscar...** y elige el archivo `.p12`. Escribe su contraseña.
 
-Si necesitas una segunda firma, deja marcada **Usar segunda firma** y repite lo mismo en **Firma 2**. Si solo usas una, desmarca esa casilla.
+En **Cantidad de firmas** elige de 1 a 4 y completa una línea por cada firma (archivo y contraseña). Cada firma tiene su color en el selector de posición.
 
 Pulsa **Validar firmas** para comprobar que la contraseña es correcta y que la firma está vigente. El programa te avisa si está vencida, si todavía no es válida o si vence en menos de 30 días.
 
@@ -49,7 +49,7 @@ Opciones:
 Con **Mostrar firma visible en el documento** marcada, pulsa **Elegir posición de las firmas...**. Se abre un PDF de ejemplo:
 
 1. Elige la página donde irá la firma: primera, última o un número.
-2. Arrastra el mouse sobre la hoja para dibujar el recuadro de la Firma 1 (rojo). Después dibuja el de la Firma 2 (azul).
+2. Arrastra el mouse sobre la hoja para dibujar el recuadro de la Firma 1 (rojo). Después dibuja los de las demás: Firma 2 (azul), Firma 3 (verde) y Firma 4 (naranja). Al terminar una, el programa pasa solo a la siguiente.
 3. Si no te gusta, vuelve a dibujar. Pulsa **Aceptar posición**.
 
 La posición se guarda como proporción de la página, así que se adapta a hojas de distinto tamaño.

@@ -32,9 +32,9 @@ def _app_modulo():
 
 
 def resetear(a):
-    for v in (a.p12_1, a.clave_1, a.p12_2, a.clave_2, a.carpeta_in, a.carpeta_out, a.tsa_user, a.tsa_pass):
+    for v in (*a.p12, *a.clave, a.carpeta_in, a.carpeta_out, a.tsa_user, a.tsa_pass):
         v.set("")
-    a.usar_2.set(True); a.visible.set(True); a.qr.set(True); a.recursivo.set(False)
+    a.n_firmas.set(2); a.visible.set(True); a.qr.set(True); a.recursivo.set(False)
     a.omitir.set(True); a.evitar.set(True); a.usar_tsa.set(False)
     a.tsa_url.set("http://timestamp.digicert.com")
     a.posicion.update(modo="ultima", numero=1, cajas={}, definida=False)
@@ -80,9 +80,19 @@ def esperar(app, condicion, timeout=60):
     return res["ok"]
 
 
+FRACCIONES_4 = {1: (0.07, 0.62, 0.48, 0.70), 2: (0.52, 0.62, 0.93, 0.70),
+                3: (0.07, 0.88, 0.48, 0.96), 4: (0.52, 0.88, 0.93, 0.96)}
+
+
+def poner_firmantes(app, certs, *nombres):
+    app.n_firmas.set(len(nombres))
+    for i, nombre in enumerate(nombres):
+        app.p12[i].set(certs[nombre]); app.clave[i].set(CLAVE)
+    app._aplicar_cantidad()
+
+
 def preparar(app, certs, entrada, salida, recursivo=True):
-    app.p12_1.set(certs["uno"]); app.clave_1.set(CLAVE)
-    app.p12_2.set(certs["dos"]); app.clave_2.set(CLAVE)
+    poner_firmantes(app, certs, "uno", "dos")
     app.carpeta_in.set(str(entrada)); app.carpeta_out.set(str(salida))
     app.recursivo.set(recursivo)
     app._guardar_posicion("ultima", 1, dict(FRACCIONES))
@@ -127,16 +137,15 @@ def test_valores_por_defecto(app):
     assert app.tsa_url.get() == "http://timestamp.digicert.com"
     assert app.usar_tsa.get() is False
     assert app.evitar.get() is True and app.omitir.get() is True and app.qr.get() is True
-    assert app.usar_2.get() is True
+    assert app.n_firmas.get() == 2
 
 
 # --------------------------------------------------------------- validación
 def test_validar_firmas(app, certs):
-    app.p12_1.set(certs["uno"]); app.clave_1.set(CLAVE)
-    app.p12_2.set(certs["vencida"]); app.clave_2.set(CLAVE)
+    poner_firmantes(app, certs, "uno", "vencida")
     assert app._validar() is False
     assert app.mensajes[-1][1] == "Revisa las firmas" and "VENCIDA" in app.mensajes[-1][2]
-    app.p12_2.set(certs["dos"])
+    app.p12[1].set(certs["dos"])
     assert app._validar() is True
     assert app.mensajes[-1][1] == "Firmas correctas"
 
@@ -144,8 +153,7 @@ def test_validar_firmas(app, certs):
 def test_iniciar_pide_posicion_y_datos(app, certs, tmp_path):
     app._iniciar()
     assert app.mensajes[-1][1] == "Falta información"
-    app.p12_1.set(certs["uno"]); app.clave_1.set(CLAVE)
-    app.p12_2.set(certs["dos"]); app.clave_2.set(CLAVE)
+    poner_firmantes(app, certs, "uno", "dos")
     entrada = tmp_path / "in"; entrada.mkdir()
     app.carpeta_in.set(str(entrada)); app.carpeta_out.set(str(tmp_path / "out"))
     app._iniciar()
@@ -257,6 +265,56 @@ def test_sin_espacio_no_firma_y_lo_informa(app, certs, tmp_path):
     assert filas["lleno.pdf"][8] == "No hay espacio libre para las firmas en la página 1"
 
 
+@pytest.mark.parametrize("nombres", [("uno",), ("uno", "dos", "tres"), ("uno", "dos", "tres", "cuatro")])
+def test_corrida_con_1_3_y_4_firmas(app, certs, tmp_path, nombres):
+    entrada, salida = tmp_path / "in", tmp_path / "out"
+    crear_pdf(entrada / "a.pdf", tam=LETTER)
+    preparar(app, certs, entrada, salida, recursivo=False)
+    poner_firmantes(app, certs, *nombres)
+    app._guardar_posicion("ultima", 1, {n: FRACCIONES_4[n] for n in range(1, len(nombres) + 1)})
+    assert corrida(app)[1] == "Listo"
+    assert firmas_de(str(salida / "a.pdf")) == [(f"Firma{n}", True) for n in range(1, len(nombres) + 1)]
+    texto = pymupdf.open(str(salida / "a.pdf"))[-1].get_text()
+    for n in nombres:
+        assert {"uno": "Firmante Uno", "dos": "Firmante Dos", "tres": "Firmante Tres",
+                "cuatro": "Firmante Cuatro"}[n] in texto
+    resumen = open(glob.glob(str(salida / "resumen_firmado_*.txt"))[0], encoding="utf-8").read()
+    assert resumen.count("certificado vigente hasta") == len(nombres)
+
+
+def test_cambiar_cantidad_muestra_filas_y_pide_nueva_posicion(app, certs):
+    app._guardar_posicion("ultima", 1, dict(FRACCIONES))
+    app.n_firmas.set(4); app._cambio_cantidad(); app.update()
+    assert [m.winfo_ismapped() for m in app.filas_firma] == [True] * 4
+    assert app.posicion["definida"] is False and app.texto_pos.get() == "Posición: sin definir"
+    app.n_firmas.set(1); app._cambio_cantidad(); app.update()
+    assert [m.winfo_ismapped() for m in app.filas_firma] == [True, False, False, False]
+
+
+def test_firma_vacia_de_la_tercera_avisa(app, certs):
+    poner_firmantes(app, certs, "uno", "dos", "tres")
+    app.clave[2].set("")
+    app._iniciar()
+    assert app.mensajes[-1] == ("showwarning", "Falta información", "Selecciona la Firma 3 e ingresa su contraseña.")
+
+
+def test_selector_con_cuatro_firmas(app, tmp_path):
+    from firmador_masivo.gui import SelectorPosicion
+    crear_pdf(tmp_path / "ej.pdf")
+    app.n_firmas.set(4); app._cambio_cantidad()
+    app.carpeta_in.set(str(tmp_path)); app.carpeta_out.set(str(tmp_path / "out"))
+    app._abrir_selector(); app.update()
+    sel = [w for w in app.winfo_children() if isinstance(w, SelectorPosicion)][0]
+    assert set(sel.cajas) == {1, 2, 3, 4}            # parte con las posiciones por defecto
+    sel.canvas.event_generate("<ButtonPress-1>", x=30, y=30)
+    sel.canvas.event_generate("<B1-Motion>", x=200, y=90)
+    sel.canvas.event_generate("<ButtonRelease-1>", x=200, y=90)
+    sel.update()
+    assert sel.activa.get() == 2
+    sel._aceptar(); app.update()
+    assert set(app.posicion["cajas"]) == {1, 2, 3, 4} and app.posicion["definida"]
+
+
 def test_carpeta_vacia(app, certs, tmp_path):
     entrada = tmp_path / "in"; entrada.mkdir()
     preparar(app, certs, entrada, tmp_path / "out")
@@ -329,7 +387,7 @@ def test_pausar_y_reanudar(app, certs, tmp_path):
 ])
 def test_cambiar_idioma_redibuja_la_ventana(app, cod, boton, contrasena, posicion):
     from firmador_masivo import i18n
-    app.p12_1.set("conservado.p12")                      # lo escrito no se pierde al cambiar
+    app.p12[0].set("conservado.p12")                     # lo escrito no se pierde al cambiar
     app.idioma_nombre.set(i18n.IDIOMAS[cod])
     if cod == "es":                                      # parte de otro idioma para que haya cambio
         i18n.fijar_idioma("en"); app._construir(); app.idioma_nombre.set(i18n.IDIOMAS["es"])
@@ -337,7 +395,7 @@ def test_cambiar_idioma_redibuja_la_ventana(app, cod, boton, contrasena, posicio
     textos = textos_de_widgets(app)
     assert boton in textos and contrasena in textos
     assert app.texto_pos.get() == posicion
-    assert app.p12_1.get() == "conservado.p12"
+    assert app.p12[0].get() == "conservado.p12"
     assert i18n.idioma_actual() == cod
 
 

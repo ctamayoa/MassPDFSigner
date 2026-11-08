@@ -1,12 +1,12 @@
 # Mass PDF Signer
 
-Windows desktop application that signs hundreds or thousands of PDFs in one go with one or two electronic-signature certificates (`.p12` / `.pfx`). No command line needed: pick your certificates and the folder with the PDFs, draw with the mouse where each signature goes, and press **SIGN DOCUMENTS**.
+Windows desktop application that signs hundreds or thousands of PDFs in one go with one to four electronic-signature certificates (`.p12` / `.pfx`). No command line needed: pick your certificates and the folder with the PDFs, draw with the mouse where each signature goes, and press **SIGN DOCUMENTS**.
 
 The interface is available in **Spanish, English and Portuguese (Brazil)**; switch language from the window. The project documentation in `docs/` is currently in Spanish.
 
 ## Features
 
-- Signs with **two certificates at once** (or just one).
+- Signs with **up to four certificates at once** (or just one), each in its own box.
 - **Visible signature** at the position you draw on a preview, with an optional **QR code**.
 - **Avoids covering content**: detects text and images under the signature boxes and moves them to free space. If there is none, that PDF is not signed and is listed in the report.
 - **Subfolders**: walks a whole tree and mirrors it in the output folder. Originals are never modified.

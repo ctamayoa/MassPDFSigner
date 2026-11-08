@@ -1,10 +1,10 @@
 # Firmador Masivo PDF
 
-Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una sola vez con uno o dos certificados de firma electrónica (`.p12` / `.pfx`). No necesita consola: eliges tus firmas, la carpeta con los PDFs, dibujas con el mouse dónde va cada firma y pulsas **FIRMAR DOCUMENTOS**.
+Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una sola vez con uno a cuatro certificados de firma electrónica (`.p12` / `.pfx`). No necesita consola: eliges tus firmas, la carpeta con los PDFs, dibujas con el mouse dónde va cada firma y pulsas **FIRMAR DOCUMENTOS**.
 
 ## Qué hace
 
-- Firma con **dos certificados a la vez** (o con uno solo).
+- Firma con **hasta cuatro certificados a la vez** (o con uno solo), cada uno en su propio recuadro.
 - **Firma visible** en la posición que dibujes sobre una vista previa, con **código QR** opcional.
 - **Evita tapar el contenido**: detecta texto e imágenes bajo las firmas y las mueve a un lugar libre. Si no hay espacio, no firma ese PDF y lo deja anotado en el informe.
 - **Subcarpetas**: puede recorrer todo un árbol y replica la misma estructura en la carpeta de salida. Nunca modifica los originales.

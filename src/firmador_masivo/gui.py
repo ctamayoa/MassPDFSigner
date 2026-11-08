@@ -13,22 +13,22 @@ from .firmas import (cargar_firmante, crear_sellador, firmar_un_pdf, nombre_titu
                      probar_sellador, revisar_firma)
 from .i18n import IDIOMAS, t
 from .informes import fmt_fecha, fmt_hms, guardar_informes, resumen_corto
-from .posicion import COLORES, DEFECTO, SinEspacio, cajas_para_pdf, fitz, indice_pagina
+from .posicion import COLORES, DEFECTO, MAX_FIRMAS, SinEspacio, cajas_para_pdf, fitz, indice_pagina
 
 
 # ------------------------------------------------- ventana de posición ---
 class SelectorPosicion(tk.Toplevel):
     """Muestra un PDF y deja dibujar con el mouse el recuadro de cada firma."""
 
-    def __init__(self, master, ruta_pdf, usar_2, estado, al_aceptar):
+    def __init__(self, master, ruta_pdf, n_firmas, estado, al_aceptar):
         super().__init__(master)
         self.title(t("sel.titulo"))
         self.transient(master)
         self.grab_set()
         self.doc = fitz.open(ruta_pdf)
-        self.usar_2 = usar_2
+        self.n_firmas = n_firmas
         self.al_aceptar = al_aceptar
-        self.cajas = {k: v for k, v in estado["cajas"].items() if k == 1 or usar_2}
+        self.cajas = {k: v for k, v in estado["cajas"].items() if k <= n_firmas}
         self.modo = tk.StringVar(value=estado["modo"])
         self.numero = tk.IntVar(value=estado["numero"])
         self.activa = tk.IntVar(value=1)
@@ -49,9 +49,9 @@ class SelectorPosicion(tk.Toplevel):
 
         ttk.Separator(barra, orient="vertical").pack(side="left", fill="y", padx=10)
         ttk.Label(barra, text=t("sel.dibujar")).pack(side="left")
-        ttk.Radiobutton(barra, text=t("sel.firma1"), value=1, variable=self.activa).pack(side="left", padx=3)
-        if usar_2:
-            ttk.Radiobutton(barra, text=t("sel.firma2"), value=2, variable=self.activa).pack(side="left", padx=3)
+        for n in range(1, n_firmas + 1):
+            tk.Label(barra, text="■", fg=COLORES[n]).pack(side="left", padx=(6, 0))
+            ttk.Radiobutton(barra, text=t("sel.etiqueta", n=n), value=n, variable=self.activa).pack(side="left", padx=2)
 
         ttk.Label(self, text=t("sel.ayuda")).pack(anchor="w", padx=8)
 
@@ -127,11 +127,14 @@ class SelectorPosicion(tk.Toplevel):
         self.cajas[n] = (x0 / self.w, y0 / self.h, x1 / self.w, y1 / self.h)
         self._rect(n, x0, y0, x1, y1)
         self.dibujadas.add(n)
-        if n == 1 and self.usar_2 and 2 not in self.dibujadas:
-            self.activa.set(2)
+        # pasa solo a la siguiente firma que aún no se dibujó
+        for sig in range(n + 1, self.n_firmas + 1):
+            if sig not in self.dibujadas:
+                self.activa.set(sig)
+                break
 
     def _aceptar(self):
-        faltan = [n for n in ((1, 2) if self.usar_2 else (1,)) if n not in self.cajas]
+        faltan = [n for n in range(1, self.n_firmas + 1) if n not in self.cajas]
         if faltan:
             messagebox.showwarning(t("sel.falta_titulo"), t("sel.falta_texto", n=faltan[0]), parent=self)
             return
@@ -159,11 +162,10 @@ class App(tk.Tk):
         self.columnconfigure(1, weight=1)
 
         # Las variables viven aquí para conservar lo escrito cuando se cambia de idioma
-        self.p12_1 = tk.StringVar()
-        self.clave_1 = tk.StringVar()
-        self.p12_2 = tk.StringVar()
-        self.clave_2 = tk.StringVar()
-        self.usar_2 = tk.BooleanVar(value=True)
+        self.p12 = [tk.StringVar() for _ in range(MAX_FIRMAS)]
+        self.clave = [tk.StringVar() for _ in range(MAX_FIRMAS)]
+        self.n_firmas = tk.IntVar(value=2)
+        self.firmantes = []
         self.carpeta_in = tk.StringVar()
         self.carpeta_out = tk.StringVar()
         self.visible = tk.BooleanVar(value=True)
@@ -200,7 +202,7 @@ class App(tk.Tk):
         self.estado.set(t("estado.listo"))
         self.idioma_nombre.set(IDIOMAS[i18n.idioma_actual()])
 
-        pad = {"padx": 8, "pady": 4}
+        pad = {"padx": 8, "pady": 2}   # compacto: con 4 firmas la ventana debe caber en 1280x720
         fila = 0
 
         barra_idioma = ttk.Frame(self)
@@ -212,20 +214,18 @@ class App(tk.Tk):
         self.combo_idioma.bind("<<ComboboxSelected>>", lambda e: self.after(0, self._cambiar_idioma))
         fila += 1
 
-        f1 = ttk.LabelFrame(self, text=t("ui.firma1"))
-        f1.grid(row=fila, column=0, columnspan=3, sticky="ew", **pad)
-        self._bloque_firma(f1, self.p12_1, self.clave_1)
-        fila += 1
-
-        f2 = ttk.LabelFrame(self, text=t("ui.firma2"))
-        f2.grid(row=fila, column=0, columnspan=3, sticky="ew", **pad)
-        ttk.Checkbutton(
-            f2, text=t("ui.usar_2"), variable=self.usar_2,
-            command=self._alternar_firma2,
-        ).grid(row=0, column=0, columnspan=3, sticky="w", padx=6)
-        self._bloque_firma(f2, self.p12_2, self.clave_2, fila_inicio=1)
-        self.f2 = f2
-        self._aplicar_estado_firma2()
+        ff = ttk.LabelFrame(self, text=t("ui.firmas_marco"))
+        ff.grid(row=fila, column=0, columnspan=3, sticky="ew", **pad)
+        cant = ttk.Frame(ff)
+        cant.grid(row=0, column=0, columnspan=5, sticky="w", padx=6, pady=(2, 0))
+        ttk.Label(cant, text=t("ui.cantidad")).pack(side="left")
+        self.spin_firmas = ttk.Spinbox(cant, from_=1, to=MAX_FIRMAS, width=3, state="readonly",
+                                       textvariable=self.n_firmas, command=self._cambio_cantidad)
+        self.spin_firmas.pack(side="left", padx=6)
+        self.filas_firma = []
+        for i in range(MAX_FIRMAS):
+            self.filas_firma.append(self._fila_firma(ff, i, fila=i + 1))
+        self._aplicar_cantidad()
         fila += 1
 
         ttk.Label(self, text=t("ui.carpeta_pdfs")).grid(row=fila, column=0, sticky="w", **pad)
@@ -348,25 +348,37 @@ class App(tk.Tk):
         boton.configure(state="normal" if activo else "disabled",
                         image=self._iconos[nombre if activo else nombre + "_off"])
 
-    def _bloque_firma(self, padre, var_p12, var_clave, fila_inicio=0):
-        ttk.Label(padre, text=t("ui.p12")).grid(row=fila_inicio, column=0, sticky="w", padx=6, pady=3)
-        ttk.Entry(padre, textvariable=var_p12, width=48).grid(row=fila_inicio, column=1, padx=6)
-        ttk.Button(padre, text=t("ui.buscar"), command=lambda: self._archivo(var_p12)).grid(
-            row=fila_inicio, column=2, padx=6)
-        ttk.Label(padre, text=t("ui.contrasena")).grid(row=fila_inicio + 1, column=0, sticky="w", padx=6, pady=3)
-        ttk.Entry(padre, textvariable=var_clave, show="*", width=30).grid(
-            row=fila_inicio + 1, column=1, sticky="w", padx=6)
+    def _fila_firma(self, padre, i, fila):
+        """Una línea por firmante: archivo .p12, botón de búsqueda y contraseña."""
+        marco = ttk.Frame(padre)
+        marco.grid(row=fila, column=0, columnspan=5, sticky="w")
+        tk.Label(marco, text="■", fg=COLORES[i + 1]).grid(row=0, column=0, padx=(6, 0))
+        ttk.Label(marco, text=t("ui.firma_n", n=i + 1), width=9).grid(row=0, column=1, sticky="w")
+        ttk.Entry(marco, textvariable=self.p12[i], width=34).grid(row=0, column=2, padx=4, pady=3)
+        ttk.Button(marco, text=t("ui.buscar"), command=lambda: self._archivo(self.p12[i])).grid(row=0, column=3)
+        ttk.Label(marco, text=t("ui.contrasena")).grid(row=0, column=4, padx=(10, 4))
+        ttk.Entry(marco, textvariable=self.clave[i], show="*", width=16).grid(row=0, column=5, padx=(0, 6))
+        return marco
 
-    def _aplicar_estado_firma2(self):
-        estado = "normal" if self.usar_2.get() else "disabled"
-        for w in self.f2.winfo_children():
-            if isinstance(w, (ttk.Entry, ttk.Button)):
-                w.configure(state=estado)
+    def _cantidad(self):
+        try:
+            return min(max(int(self.n_firmas.get()), 1), MAX_FIRMAS)
+        except (tk.TclError, ValueError):
+            return 1
 
-    def _alternar_firma2(self):
-        self._aplicar_estado_firma2()
-        # al cambiar de 1 a 2 firmas hay que volver a definir la posición
+    def _aplicar_cantidad(self):
+        """Muestra solo las filas de los firmantes que se van a usar."""
+        for i, marco in enumerate(self.filas_firma):
+            if i < self._cantidad():
+                marco.grid()
+            else:
+                marco.grid_remove()
+
+    def _cambio_cantidad(self):
+        self._aplicar_cantidad()
+        # al cambiar la cantidad de firmas hay que volver a definir la posición
         self.posicion["definida"] = False
+        self.posicion["cajas"] = {}
         self._actualizar_texto_pos()
 
     def _archivo(self, var):
@@ -402,9 +414,7 @@ class App(tk.Tk):
         threading.Thread(target=trabajo, daemon=True).start()
 
     def _validar(self):
-        pares = [(t("ui.firma1"), self.p12_1.get(), self.clave_1.get())]
-        if self.usar_2.get():
-            pares.append((t("ui.firma2"), self.p12_2.get(), self.clave_2.get()))
+        pares = self._pares_firma()
         lineas, todo_ok = [], True
         for etiqueta, ruta, clave in pares:
             ok, texto = revisar_firma(ruta, clave)
@@ -417,6 +427,11 @@ class App(tk.Tk):
             messagebox.showwarning(t("val.revisar_titulo"), mensaje)
         return todo_ok
 
+    def _pares_firma(self):
+        """(etiqueta, ruta .p12, contraseña) de los firmantes en uso."""
+        return [(t("ui.firma_n", n=i + 1), self.p12[i].get(), self.clave[i].get())
+                for i in range(self._cantidad())]
+
     def _lista_pdfs(self):
         return listar_pdfs(self.carpeta_in.get(), self.carpeta_out.get(), self.recursivo.get())
 
@@ -427,10 +442,13 @@ class App(tk.Tk):
             messagebox.showwarning(t("msg.primero_carpeta_t"), t("msg.primero_carpeta"))
             return
         ruta = os.path.join(self.carpeta_in.get(), pdfs[0])
-        cajas = self.posicion["cajas"] or dict(DEFECTO)
+        n = self._cantidad()
+        cajas = {k: v for k, v in (self.posicion["cajas"] or DEFECTO).items() if k <= n}
+        for k in range(1, n + 1):
+            cajas.setdefault(k, DEFECTO[k])
         estado = {"modo": self.posicion["modo"], "numero": self.posicion["numero"], "cajas": cajas}
         try:
-            SelectorPosicion(self, ruta, self.usar_2.get(), estado, self._guardar_posicion)
+            SelectorPosicion(self, ruta, n, estado, self._guardar_posicion)
         except Exception as e:
             messagebox.showerror(t("msg.no_abrir_pdf"), f"{os.path.basename(pdfs[0])}\n\n{describir_error(e)}")
 
@@ -498,12 +516,11 @@ class App(tk.Tk):
 
     # ------------------------------------------------------------- proceso
     def _iniciar(self):
-        if not self.p12_1.get() or not self.clave_1.get():
-            messagebox.showwarning(t("init.falta_t"), t("init.firma1"))
-            return
-        if self.usar_2.get() and (not self.p12_2.get() or not self.clave_2.get()):
-            messagebox.showwarning(t("init.falta_t"), t("init.firma2"))
-            return
+        pares = self._pares_firma()
+        for i, (_, ruta, clave) in enumerate(pares, 1):
+            if not ruta or not clave:
+                messagebox.showwarning(t("init.falta_t"), t("init.firma_n", n=i))
+                return
         if not os.path.isdir(self.carpeta_in.get()) or not self.carpeta_out.get():
             messagebox.showwarning(t("init.falta_t"), t("init.carpetas"))
             return
@@ -517,19 +534,14 @@ class App(tk.Tk):
         if self.usar_tsa.get() and not self.tsa_url.get().strip().lower().startswith(("http://", "https://")):
             messagebox.showwarning(t("init.tsa_t"), t("init.tsa"))
             return
-        for etiqueta, ruta, clave in (
-            [(t("ui.firma1"), self.p12_1.get(), self.clave_1.get())]
-            + ([(t("ui.firma2"), self.p12_2.get(), self.clave_2.get())] if self.usar_2.get() else [])
-        ):
+        for etiqueta, ruta, clave in pares:
             ok, texto = revisar_firma(ruta, clave)
             if not ok:
                 messagebox.showerror(t("init.problema_firma", etiqueta=etiqueta), texto)
                 return
 
         try:
-            self.firmante1 = cargar_firmante(self.p12_1.get(), self.clave_1.get())
-            self.firmante2 = (cargar_firmante(self.p12_2.get(), self.clave_2.get())
-                              if self.usar_2.get() else None)
+            self.firmantes = [(etiqueta, cargar_firmante(ruta, clave)) for etiqueta, ruta, clave in pares]
         except Exception:
             messagebox.showerror(t("init.firma_no_abre_t"), t("init.firma_no_abre"))
             return
@@ -586,7 +598,8 @@ class App(tk.Tk):
         pos = datos["pos"]
         # un solo cliente TSA para toda la corrida: evita consultas de medición repetidas
         tsa = crear_sellador(*datos["tsa"]) if datos["tsa"] else None
-        fracciones = {n: c for n, c in pos["cajas"].items() if n == 1 or self.firmante2 is not None}
+        lista = list(self.firmantes)   # [(etiqueta, firmante)]
+        fracciones = {n: c for n, c in pos["cajas"].items() if n <= len(lista)}
         registros = []
         self.after(0, lambda: self.barra.configure(maximum=total, value=0))
 
@@ -616,10 +629,8 @@ class App(tk.Tk):
                         pagina, cajas, ajuste = cajas_para_pdf(
                             origen, pos["modo"], pos["numero"], fracciones, datos["evitar"])
                     else:
-                        pagina, cajas = 0, {1: None, 2: None}
-                    firmantes = [(self.firmante1, "Firma1", cajas[1])]
-                    if self.firmante2 is not None:
-                        firmantes.append((self.firmante2, "Firma2", cajas[2]))
+                        pagina, cajas = 0, {n: None for n in range(1, len(lista) + 1)}
+                    firmantes = [(f, f"Firma{n}", cajas[n]) for n, (_, f) in enumerate(lista, 1)]
                     firmar_un_pdf(origen, destino, firmantes, pagina, visible, tsa, datos["qr"])
             except SinEspacio as e:
                 estado, mensaje = "sin_espacio", str(e)
@@ -651,8 +662,7 @@ class App(tk.Tk):
                 "evitar": datos["evitar"],
                 "entrada": entrada, "salida": salida,
                 "equipo": socket.gethostname(), "usuario": os.environ.get("USERNAME") or os.environ.get("USER", "?"),
-                "firmantes": [self._datos_firmante(t("ui.firma1"), self.firmante1)] +
-                             ([self._datos_firmante(t("ui.firma2"), self.firmante2)] if self.firmante2 is not None else []),
+                "firmantes": [self._datos_firmante(etq, f) for etq, f in lista],
             }
             ok = sum(1 for r in registros if r["estado"] == "firmado")
             omit = sum(1 for r in registros if r["estado"] == "omitido")
