@@ -70,6 +70,8 @@ def certs(tmp_path_factory):
     return {
         "uno": crear_p12(d / "uno.p12", "Firmante Uno", ini, fin),
         "dos": crear_p12(d / "dos.p12", "Firmante Dos", ini, fin),
+        "tres": crear_p12(d / "tres.p12", "Firmante Tres", ini, fin),
+        "cuatro": crear_p12(d / "cuatro.p12", "Firmante Cuatro", ini, fin),
         "tilde": crear_p12(d / "tilde.p12", "José Muñoz Peña", ini, fin),
         "vencida": crear_p12(d / "vencida.p12", "Vencida SA", ahora - datetime.timedelta(days=900),
                              ahora - datetime.timedelta(days=10)),

@@ -6,6 +6,15 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 ## [Unreleased]
 
+## [1.1.0] - Sin publicar
+
+### Added
+- Firma con 1 a 4 certificados en la misma corrida (antes, hasta 2). Se elige la cantidad en la ventana y cada firma tiene su recuadro y su color en el selector de posición.
+
+### Changed
+- La ventana muestra una línea por firmante, más compacta, y cabe en pantallas de 1280x720 con 4 firmas.
+- El informe lista todos los certificados usados.
+
 ## [1.0.1] - 2026-11-07
 
 ### Added
@@ -38,6 +47,7 @@ Primera versión pública. Parte de la versión interna «10» del programa.
 - Ortografía de la interfaz y de los informes (Contraseña, posición, código, página, última…).
 - Un PDF dañado, vacío o que no es un PDF ahora se informa como «El archivo está dañado o no es un PDF válido.» en lugar de «Failed to open stream».
 
-[Unreleased]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/ctamayoa/MassPDFSigner/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/ctamayoa/MassPDFSigner/releases/tag/v1.0.0

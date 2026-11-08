@@ -7,9 +7,14 @@ except ImportError:
 from .archivos import ruta_larga
 from .i18n import en_todos, t
 
-COLORES = {1: "#d62828", 2: "#1d4ed8"}
-# Posiciones por defecto (fracciones de la página, origen arriba-izquierda)
-DEFECTO = {1: (0.07, 0.86, 0.48, 0.95), 2: (0.52, 0.86, 0.93, 0.95)}
+MAX_FIRMAS = 4
+COLORES = {1: "#d62828", 2: "#1d4ed8", 3: "#2a9d3a", 4: "#e08a00"}
+# Posiciones por defecto (fracciones de la página, origen arriba-izquierda):
+# dos columnas abajo; con 3 o 4 firmas, la segunda fila queda justo encima.
+DEFECTO = {
+    1: (0.07, 0.86, 0.48, 0.95), 2: (0.52, 0.86, 0.93, 0.95),
+    3: (0.07, 0.75, 0.48, 0.84), 4: (0.52, 0.75, 0.93, 0.84),
+}
 
 
 def indice_pagina(total, modo, numero):

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "firmador-masivo-pdf"
 dynamic = ["version"]
-description = "Firma lotes de PDFs con uno o dos certificados .p12, sin consola."
+description = "Firma lotes de PDFs con de 1 a 4 certificados .p12, sin consola."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "AGPL-3.0-or-later"
