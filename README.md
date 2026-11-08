@@ -6,6 +6,10 @@
 
 Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una sola vez con uno a cuatro certificados de firma electrónica (`.p12` / `.pfx`). No necesita consola: eliges tus firmas, la carpeta con los PDFs, dibujas con el mouse dónde va cada firma y pulsas **FIRMAR DOCUMENTOS**.
 
+![Demostración: 24 PDFs firmados con 4 certificados en 11 segundos](docs/img/demo-es.gif)
+
+*Demostración con datos ficticios: 24 contratos, 4 firmas en cada uno, firmados en 11 segundos (sin sello de tiempo).*
+
 ## Qué hace
 
 - Firma con **hasta cuatro certificados a la vez** (o con uno solo), cada uno en su propio recuadro.
@@ -19,7 +23,15 @@ Aplicación de escritorio para Windows que firma cientos o miles de PDFs de una 
 - **Verificador de documentos firmados**: revisa integridad, cambios posteriores, firmante, fecha, vigencia y, con tus certificados raíz, el emisor. Informe en CSV.
 - **Informes** en cada corrida: `resumen_firmado_*.txt`, `registro_firmado_*.csv` (se abre en Excel) y `errores_firmado.txt`.
 
-Rendimiento de referencia: unos 0,2 segundos por PDF sin sello de tiempo.
+Rendimiento de referencia: entre 0,2 y 0,45 segundos por PDF sin sello de tiempo, según la cantidad de firmas.
+
+## Capturas
+
+| Ventana principal | Dibujar la posición de las firmas |
+| --- | --- |
+| ![Ventana principal](docs/img/es/ventana-principal.png) | ![Selector de posición](docs/img/es/posicion-firmas.png) |
+| **PDF firmado con 4 firmas y QR** | **Verificador de documentos firmados** |
+| ![PDF firmado](docs/img/es/pdf-firmado.png) | ![Verificador](docs/img/es/verificador.png) |
 
 ## Instalación (Windows)
 
