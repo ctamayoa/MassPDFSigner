@@ -4,6 +4,10 @@
 
 Windows desktop application that signs hundreds or thousands of PDFs in one go with one to four electronic-signature certificates (`.p12` / `.pfx`). No command line needed: pick your certificates and the folder with the PDFs, draw with the mouse where each signature goes, and press **SIGN DOCUMENTS**.
 
+![Demo: 24 PDFs signed with 4 certificates in 11 seconds](docs/img/demo-en.gif)
+
+*Demo with made-up data: 24 agreements, 4 signatures on each, signed in 11 seconds (no timestamp).*
+
 The interface is available in **Spanish, English and Portuguese (Brazil)**; switch language from the window. The project documentation in `docs/` is currently in Spanish.
 
 ## Features
@@ -17,6 +21,14 @@ The interface is available in **Spanish, English and Portuguese (Brazil)**; swit
 - **Certificate check** (password and validity) before starting.
 - **Signed-document verifier**: checks integrity, later changes, signer, date, validity and, with your root certificates, the issuer. CSV report.
 - **Reports** on every run: `resumen_firmado_*.txt`, `registro_firmado_*.csv` (opens in Excel) and `errores_firmado.txt`.
+
+## Screenshots
+
+| Main window | Drawing the signature positions |
+| --- | --- |
+| ![Main window](docs/img/en/ventana-principal.png) | ![Position picker](docs/img/en/posicion-firmas.png) |
+| **PDF signed by 4 signers, with QR** | **Signed-document verifier** |
+| ![Signed PDF](docs/img/en/pdf-firmado.png) | ![Verifier](docs/img/en/verificador.png) |
 
 ## Install (Windows)
 

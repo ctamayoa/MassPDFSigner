@@ -24,6 +24,7 @@ graphify-out/
 # Material de trabajo del autor (no es parte del proyecto público)
 /codigo/
 /referencia_pruebas/
+/difusion/
 /HANDOFF.md
 /PROMPT_INICIAL.md
 /CLAUDE.md
