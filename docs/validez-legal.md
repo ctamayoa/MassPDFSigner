@@ -53,3 +53,7 @@ Si no tienes ese requisito, puedes dejar el sello desactivado: las firmas siguen
 | ¿Por qué «validez desconocida»? | El lector no tiene la raíz de tu entidad en su lista de confianza. |
 | ¿El sello de tiempo lo arregla? | No: prueba la fecha, no la confianza. |
 | ¿Sirve el sello gratuito legalmente? | Como evidencia técnica sí; no está acreditado en Ecuador. |
+
+## Verificador del programa
+
+**Verificar documentos...** comprueba lo que se puede comprobar sin conexión: que el documento no cambió desde la firma, quién firmó, cuándo, si el certificado estaba vigente en ese momento y, si cargas los certificados raíz de la entidad, si el emisor es reconocido. No consulta revocación en línea ni emite un dictamen legal; su resultado es una ayuda técnica y no reemplaza la validación oficial de la entidad de certificación.

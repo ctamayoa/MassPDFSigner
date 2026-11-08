@@ -13,6 +13,7 @@ from .firmas import (cargar_firmante, crear_sellador, firmar_un_pdf, nombre_titu
                      probar_sellador, revisar_firma)
 from .i18n import IDIOMAS, t
 from .informes import fmt_fecha, fmt_hms, guardar_informes, resumen_corto
+from .validacion import CLAVES_VEREDICTO, aplanar, cargar_raices, guardar_csv, verificar_pdf, veredicto_de
 from .posicion import COLORES, DEFECTO, MAX_FIRMAS, SinEspacio, cajas_para_pdf, fitz, indice_pagina
 
 
@@ -153,6 +154,164 @@ class SelectorPosicion(tk.Toplevel):
         super().destroy()
 
 
+# ------------------------------------------------------ verificar firmas ---
+class VentanaVerificar(tk.Toplevel):
+    """Revisa las firmas de PDFs ya firmados y muestra el resultado de cada una."""
+
+    COLORES_RESULTADO = {"valida": "#1f7a35", "integra": "#a86b00", "revisar": "#a86b00",
+                         "invalida": "#c0392b", "sin_firmas": "#555555", "error": "#c0392b"}
+
+    def __init__(self, master):
+        super().__init__(master)
+        self.title(t("ver.titulo"))
+        self.transient(master)
+        self.origen = tk.StringVar()
+        self.raices = tk.StringVar()
+        self.recursivo = tk.BooleanVar(value=True)
+        self.estado = tk.StringVar(value=t("ver.estado_listo"))
+        self.filas = []
+        self._ocupado = False
+
+        marco = ttk.Frame(self, padding=8)
+        marco.pack(fill="both", expand=True)
+        marco.columnconfigure(1, weight=1)
+
+        ttk.Label(marco, text=t("ver.origen")).grid(row=0, column=0, sticky="w", pady=3)
+        ttk.Entry(marco, textvariable=self.origen, width=52).grid(row=0, column=1, sticky="ew", padx=6)
+        botones = ttk.Frame(marco)
+        botones.grid(row=0, column=2)
+        ttk.Button(botones, text=t("ver.btn_pdf"), command=self._elegir_pdf).pack(side="left", padx=2)
+        ttk.Button(botones, text=t("ver.btn_carpeta"), command=self._elegir_carpeta).pack(side="left", padx=2)
+        ttk.Checkbutton(marco, text=t("ver.subcarpetas"), variable=self.recursivo).grid(
+            row=1, column=1, sticky="w", padx=6)
+
+        ttk.Label(marco, text=t("ver.raices")).grid(row=2, column=0, sticky="w", pady=3)
+        ttk.Entry(marco, textvariable=self.raices, width=52).grid(row=2, column=1, sticky="ew", padx=6)
+        ttk.Button(marco, text=t("ui.elegir"), command=self._elegir_raices).grid(row=2, column=2)
+        ttk.Label(marco, text=t("ver.raices_ayuda"), foreground="#555555", wraplength=720,
+                  justify="left").grid(row=3, column=0, columnspan=3, sticky="w", pady=(0, 6))
+
+        columnas = (("archivo", "ver.col_archivo", 170), ("firma", "ver.col_firma", 60),
+                    ("firmante", "ver.col_firmante", 150), ("fecha", "ver.col_fecha", 125),
+                    ("resultado", "ver.col_resultado", 150), ("detalle", "ver.col_detalle", 330))
+        self.tabla = ttk.Treeview(marco, columns=[c[0] for c in columnas], show="headings", height=10)
+        for c, clave, ancho in columnas:
+            self.tabla.heading(c, text=t(clave))
+            self.tabla.column(c, width=ancho, anchor="w")
+        for nombre, color in self.COLORES_RESULTADO.items():
+            self.tabla.tag_configure(nombre, foreground=color)
+        barra = ttk.Scrollbar(marco, orient="vertical", command=self.tabla.yview)
+        self.tabla.configure(yscrollcommand=barra.set)
+        self.tabla.grid(row=4, column=0, columnspan=3, sticky="nsew")
+        barra.grid(row=4, column=3, sticky="ns")
+        marco.rowconfigure(4, weight=1)
+
+        ttk.Label(marco, textvariable=self.estado, wraplength=720, justify="left").grid(
+            row=5, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        ttk.Label(marco, text=t("ver.aviso"), foreground="#555555", wraplength=720, justify="left").grid(
+            row=6, column=0, columnspan=3, sticky="w", pady=(2, 6))
+
+        pie = ttk.Frame(marco)
+        pie.grid(row=7, column=0, columnspan=3, sticky="e")
+        self.btn_verificar = ttk.Button(pie, text=t("ver.verificar"), command=self._verificar)
+        self.btn_verificar.pack(side="left", padx=4, ipadx=10)
+        self.btn_guardar = ttk.Button(pie, text=t("ver.guardar"), command=self._guardar, state="disabled")
+        self.btn_guardar.pack(side="left", padx=4)
+        ttk.Button(pie, text=t("ver.cerrar"), command=self.destroy).pack(side="left", padx=4)
+
+    # --- elegir
+    def _elegir_pdf(self):
+        r = filedialog.askopenfilename(parent=self, filetypes=[("PDF", "*.pdf")])
+        if r:
+            self.origen.set(r)
+
+    def _elegir_carpeta(self):
+        r = filedialog.askdirectory(parent=self)
+        if r:
+            self.origen.set(r)
+
+    def _elegir_raices(self):
+        r = filedialog.askdirectory(parent=self)
+        if r:
+            self.raices.set(r)
+
+    # --- verificar
+    def _archivos(self):
+        origen = self.origen.get().strip()
+        if os.path.isfile(ruta_larga(origen)):
+            return os.path.dirname(origen), [os.path.basename(origen)]
+        if os.path.isdir(ruta_larga(origen)):
+            return origen, listar_pdfs(origen, "", self.recursivo.get())
+        return origen, []
+
+    def _verificar(self):
+        if self._ocupado:
+            return
+        base, pdfs = self._archivos()
+        if not pdfs:
+            messagebox.showwarning(t("ver.sin_origen_t"), t("ver.sin_origen"), parent=self)
+            return
+        raices, _, ilegibles = cargar_raices(self.raices.get().strip())
+        self._ocupado = True
+        self.btn_verificar.configure(state="disabled")
+        self.btn_guardar.configure(state="disabled")
+        self.tabla.delete(*self.tabla.get_children())
+        self.filas = []
+
+        def trabajo():
+            resultados = []
+            for i, rel in enumerate(pdfs, 1):
+                self.after(0, lambda i=i, rel=rel: self.estado.set(
+                    t("ver.estado_trabajando", i=i, total=len(pdfs), nombre=rel)))
+                res = verificar_pdf(os.path.join(base, rel), raices)
+                resultados.append((rel, res))
+                self.after(0, lambda rel=rel, res=res: self._mostrar(aplanar([(rel, res)])))
+            self.after(0, lambda: self._terminar(resultados, ilegibles))
+        threading.Thread(target=trabajo, daemon=True).start()
+
+    def _mostrar(self, filas):
+        if not self.winfo_exists():
+            return
+        for f in filas:
+            self.filas.append(f)
+            self.tabla.insert("", "end", tags=(f["veredicto"],), values=(
+                f["archivo"], f["campo"], f["firmante"], f["fecha"],
+                t(CLAVES_VEREDICTO[f["veredicto"]]), f["mensaje"]))
+
+    def _terminar(self, resultados, ilegibles):
+        if not self.winfo_exists():
+            return
+        cuenta = {}
+        for _, res in resultados:
+            v = veredicto_de(res)
+            cuenta[v] = cuenta.get(v, 0) + 1
+        texto = t("ver.estado_fin", n=len(resultados), ok=cuenta.get("valida", 0),
+                  ig=cuenta.get("integra", 0), rev=cuenta.get("revisar", 0), inv=cuenta.get("invalida", 0),
+                  sf=cuenta.get("sin_firmas", 0), er=cuenta.get("error", 0))
+        if ilegibles:
+            texto += t("ver.raices_ilegibles", m=ilegibles)
+        self.estado.set(texto)
+        self._ocupado = False
+        self.btn_verificar.configure(state="normal")
+        self.btn_guardar.configure(state="normal" if self.filas else "disabled")
+
+    def _guardar(self):
+        if not self.filas:
+            messagebox.showinfo(t("ver.sin_origen_t"), t("ver.sin_resultados"), parent=self)
+            return
+        sello = time.strftime("%Y-%m-%d_%H%M%S")
+        ruta = filedialog.asksaveasfilename(
+            parent=self, title=t("ver.guardar_titulo"), defaultextension=".csv",
+            initialfile=f"verificacion_firmas_{sello}.csv", filetypes=[("CSV", "*.csv")])
+        if not ruta:
+            return
+        try:
+            guardar_csv(ruta, self.filas)
+            messagebox.showinfo(t("ver.guardado_t"), t("ver.guardado", ruta=ruta), parent=self)
+        except Exception:
+            messagebox.showerror(t("ver.guardado_t"), t("ver.guardar_fallo"), parent=self)
+
+
 # ------------------------------------------------------------------- GUI ---
 class App(tk.Tk):
     def __init__(self):
@@ -285,6 +444,8 @@ class App(tk.Tk):
         self.btn_val.grid(row=0, column=0, sticky="ns", padx=(0, 8), ipadx=10)
         self.btn = ttk.Button(botones, text=t("ui.firmar"), command=self._iniciar)
         self.btn.grid(row=0, column=1, sticky="ew", ipady=8)
+        self.btn_ver = ttk.Button(botones, text=t("ver.boton"), command=lambda: VentanaVerificar(self))
+        self.btn_ver.grid(row=0, column=2, sticky="ns", padx=(8, 0), ipadx=10)
         fila += 1
         self._crear_iconos()
         control = ttk.Frame(self)
